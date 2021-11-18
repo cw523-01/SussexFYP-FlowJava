@@ -1,4 +1,3 @@
-
 package flowjava;
 
 import java.util.ArrayList;
@@ -27,17 +26,17 @@ import javax.script.ScriptException;
  */
 public class VarDecDialog {
     //data type
-    private static VarType type;
+    private VarType type;
     //variable name and value
-    private static String name, val;
+    private String name, val;
     
-    private static ComboBox<VarType> typeCmbx;
+    private ComboBox<VarType> typeCmbx;
     
-    private static TextField valueTxtFld;
+    private TextField valueTxtFld;
     
-    private static ExpressionHBox exprHbx;
+    private ExpressionHBox exprHbx;
     
-    public static Object[] display(ArrayList<Var> variables) {
+    public Object[] display(ArrayList<Var> variables) {
         //set the fields to empty values
         type = null;
         name = "";
@@ -188,21 +187,18 @@ public class VarDecDialog {
                                     } else {
                                         o = (double) o;
                                     }
-                                    if(((Double)o).isNaN()){
-                                        Alert nullAlert = new Alert(AlertType.ERROR);
-                                        nullAlert.setContentText("Expression does not produce a valid number!");
-                                        nullAlert.show();
+                                    if(Double.valueOf(o.toString()).isNaN()){
+                                        showAlert(AlertType.ERROR, "Expression does not produce a valid number!");
                                         return;
                                     }
                                 } catch (ClassCastException exc) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Expression returns type that cannot be cast to specified variable type!\nExpression type: "
+                                    showAlert(AlertType.ERROR, "Expression returns type that cannot be cast to specified variable type!\nExpression type: "
                                             + o.getClass().getSimpleName());
-                                    nullAlert.show();
                                     return;
                                 }
                                 val = expr;
                                 break;
+                                
                             case FLOAT:
                                 boolean valid = true;
                                 int i = 0;
@@ -213,9 +209,7 @@ public class VarDecDialog {
                                     i++;
                                 }
                                 if(!valid){
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Cannot use numbers of type Double in Float assignment");
-                                    nullAlert.show();
+                                    showAlert(AlertType.ERROR, "Cannot use numbers of type Double in Float assignment");
                                     return;
                                 }
                                 try {
@@ -226,17 +220,13 @@ public class VarDecDialog {
                                     } else {
                                         o = (float) o;
                                     }
-                                    if(((Double)o).isNaN()){
-                                        Alert nullAlert = new Alert(AlertType.ERROR);
-                                        nullAlert.setContentText("Expression does not produce a valid number!");
-                                        nullAlert.show();
+                                    if((Double.valueOf(o.toString())).isNaN()){
+                                        showAlert(AlertType.ERROR, "Expression does not produce a valid number!");
                                         return;
                                     }
                                 } catch (ClassCastException exc) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Expression returns type that cannot be cast to specified variable type!\nExpression type: "
+                                    showAlert(AlertType.ERROR, "Expression returns type that cannot be cast to specified variable type!\nExpression type: "
                                             + o.getClass().getSimpleName());
-                                    nullAlert.show();
                                     return;
                                 }
                                 val = expr;
@@ -252,9 +242,7 @@ public class VarDecDialog {
                                     i++;
                                 }
                                 if (!valid) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Cannot use numbers of type Double or Float in Long assignment");
-                                    nullAlert.show();
+                                    showAlert(AlertType.ERROR, "Cannot use numbers of type Double or Float in Long assignment");
                                     return;
                                 }
                                 try {
@@ -265,17 +253,13 @@ public class VarDecDialog {
                                     } else {
                                         o = (long) o;
                                     }
-                                    if(((Double)o).isNaN()){
-                                        Alert nullAlert = new Alert(AlertType.ERROR);
-                                        nullAlert.setContentText("Expression does not produce a valid number!");
-                                        nullAlert.show();
+                                    if(Double.valueOf(o.toString()).isNaN()){
+                                        showAlert(AlertType.ERROR, "Expression does not produce a valid number!");
                                         return;
                                     }
                                 } catch (ClassCastException exc) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Expression returns type that cannot be cast to specified variable type!\nExpression type: "
+                                    showAlert(AlertType.ERROR, "Expression returns type that cannot be cast to specified variable type!\nExpression type: "
                                             + o.getClass().getSimpleName());
-                                    nullAlert.show();
                                     return;
                                 }
                                 val = expr;
@@ -292,9 +276,7 @@ public class VarDecDialog {
                                     i++;
                                 }
                                 if (!valid) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Cannot use numbers of type Double, Float or Long in Integer assignment");
-                                    nullAlert.show();
+                                    showAlert(AlertType.ERROR, "Cannot use numbers of type Double, Float or Long in Integer assignment");
                                     return;
                                 }
                                 try {
@@ -303,36 +285,22 @@ public class VarDecDialog {
                                     } else {
                                         o = (int) o;
                                     }
-                                    if(((Double)o).isNaN()){
-                                        Alert nullAlert = new Alert(AlertType.ERROR);
-                                        nullAlert.setContentText("Expression does not produce a valid number!");
-                                        nullAlert.show();
+                                    if(Double.valueOf(o.toString()).isNaN()){
+                                        showAlert(AlertType.ERROR, "Expression does not produce a valid number!");
                                         return;
                                     }
                                 } catch (ClassCastException exc) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Expression returns type that cannot be cast to specified variable type!\nExpression type: "
+                                    showAlert(AlertType.ERROR, "Expression returns type that cannot be cast to specified variable type!\nExpression type: "
                                             + o.getClass().getSimpleName());
-                                    nullAlert.show();
                                     return;
                                 }
                                 val = expr;
                                 break;
 
                             case SHORT:
-                                valid = true;
-                                i = 0;
-                                while (valid && i < usedVars.size()) {
-                                    if (usedVars.get(i).getType().equals(VarType.DOUBLE) || usedVars.get(i).getType().equals(VarType.FLOAT)
-                                            || usedVars.get(i).getType().equals(VarType.LONG) || usedVars.get(i).getType().equals(VarType.INTEGER)) {
-                                        valid = false;
-                                    }
-                                    i++;
-                                }
+                                valid = validateUsedTypes(new VarType[]{VarType.DOUBLE, VarType.FLOAT, VarType.LONG, VarType.INTEGER}, usedVars);
                                 if (!valid) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Cannot use numbers of type Double, Float, Long or Integer in short assignment");
-                                    nullAlert.show();
+                                    showAlert(AlertType.ERROR, "Cannot use numbers of type Double, Float, Long or Integer in Short assignment");
                                     return;
                                 }
                                 try {
@@ -343,17 +311,13 @@ public class VarDecDialog {
                                     } else {
                                         o = (short) o;
                                     }
-                                    if(((Double)o).isNaN()){
-                                        Alert nullAlert = new Alert(AlertType.ERROR);
-                                        nullAlert.setContentText("Expression does not produce a valid number!");
-                                        nullAlert.show();
+                                    if(Double.valueOf(o.toString()).isNaN()){
+                                        showAlert(AlertType.ERROR, "Expression does not produce a valid number!");
                                         return;
                                     }
                                 } catch (ClassCastException exc) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Expression returns type that cannot be cast to specified variable type!\nExpression type: "
+                                    showAlert(AlertType.ERROR, "Expression returns type that cannot be cast to specified variable type!\nExpression type: "
                                             + o.getClass().getSimpleName());
-                                    nullAlert.show();
                                     return;
                                 }
                                 val = expr;
@@ -361,10 +325,8 @@ public class VarDecDialog {
 
                             default:
                                 if (FlowJava.parseVal(typeCmbx.getValue(), o.toString()) == null) {
-                                    Alert nullAlert = new Alert(AlertType.ERROR);
-                                    nullAlert.setContentText("Expression returns type that cannot be cast to specified variable type!\nExpression type: "
+                                    showAlert(AlertType.ERROR, "Expression returns type that cannot be cast to specified variable type!\nExpression type: "
                                             + o.getClass().getSimpleName());
-                                    nullAlert.show();
                                     return;
                                 }
 
@@ -399,6 +361,25 @@ public class VarDecDialog {
         //return input
         return new Object[]{type,name,val,exprHbx};
     }
+    
+    private void showAlert(AlertType alertType, String message){
+        Alert customAlert = new Alert(alertType);
+        customAlert.setContentText(message);
+        customAlert.show();
+    }
+
+    private boolean validateUsedTypes(VarType[] invalidTypes, ArrayList<Var> usedVars) {
+        boolean valid = true;
+        int i = 0;
+        while(valid && i < usedVars.size()){
+            for(VarType t: invalidTypes){
+                valid = !usedVars.get(i).getType().equals(t);
+            }
+            i++;
+        }
+        return valid;
+    }
 
         
 }
+
