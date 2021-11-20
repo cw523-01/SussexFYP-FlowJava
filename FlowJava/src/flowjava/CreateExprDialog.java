@@ -54,7 +54,7 @@ public class CreateExprDialog {
         
         confirmBtn = new Button("Confirm");
         confirmBtn.setOnAction(e ->{
-            if(exprHbx.isSyntaxValid()){
+            if(exprHbx.isComplete()){
                validSubmit = true;
                stage.close();
             }

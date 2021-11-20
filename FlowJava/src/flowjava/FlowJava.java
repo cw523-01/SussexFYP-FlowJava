@@ -55,6 +55,7 @@ public class FlowJava extends Application {
     
     @Override
     public void start(Stage primaryStage) throws ScriptException {
+        
         //instantiate flowchart
         flowchart = new Flowchart();
         
@@ -99,13 +100,15 @@ public class FlowJava extends Application {
         VBox leftSidebarVb = new VBox();
         
         //instantiate new flowchart component buttons
-        Button varDeclarationBtn = new Button("Variable Declaration");
-        varDeclarationBtn.setPrefSize(198, 50);
         connectionBtn = new Button("Connection");
         connectionBtn.setPrefSize(198, 50);
+        Button varDeclarationBtn = new Button("Variable Declaration");
+        varDeclarationBtn.setPrefSize(198, 50);
+        Button userInToVarBtn = new Button("User Input to Variable");
+        userInToVarBtn.setPrefSize(198, 50);
         
         //add buttons to left sidebar
-        leftSidebarVb.getChildren().addAll(connectionBtn,varDeclarationBtn);
+        leftSidebarVb.getChildren().addAll(connectionBtn,varDeclarationBtn,userInToVarBtn);
         
         //instantiate canvas scrollpane
         canvasSp = new ScrollPane();
@@ -159,7 +162,8 @@ public class FlowJava extends Application {
             newVarDecController.setVertex(newVarDeclaration);
             
             //open variable declaration fields input form dialog
-            Object[] dialogResults = VarDecDialog.display(flowchart.getVariables());
+            VarDecDialog vDD = new VarDecDialog();
+            Object[] dialogResults = vDD.display(flowchart.getVariables());
             boolean valuesNotNull = true;
             int i = 0;
             
@@ -170,6 +174,7 @@ public class FlowJava extends Application {
                 }
                 i++;
             }
+            
             //only instantiate vertex if the values are not null
             if(valuesNotNull){
                 //set contoller values
@@ -195,11 +200,69 @@ public class FlowJava extends Application {
                 newVarDeclaration.getView().updateLabel(newVarDeclaration.getController().getVertexLabel());
                 
             }
-            
         });
         
+        userInToVarBtn.setOnAction(e -> {
+            resetCanvasSize();
+            
+            //create parallelogram for vertex view background
+            Polygon parallelogram = new Polygon();
+            parallelogram.getPoints().addAll(30.0, 0.0, 185.0, 0.0, 
+                                         155.00, 70.0, 0.0, 70.0);
+            
+            //instantiate strings for different view styles
+            String userInDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
+            String userInSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            
+            //instantiate Vertex model view and controller
+            Vertex newUserInToVar = new Vertex(new UserInputToVariable(), parallelogram, userInDefStyle, userInSelStyle);
+            UserInputToVariable newUserInToVarController = (UserInputToVariable)newUserInToVar.getController();
+            newUserInToVarController.setVertex(newUserInToVar);
+            
+            
+            //open variable declaration fields input form dialog
+            UserInDialog uID = new UserInDialog();
+            Object[] dialogResults = uID.display(flowchart.getVariables());
+            
+            boolean valuesNotNull = true;
+            int i = 0;
+            
+            //check if given values are null
+            while(valuesNotNull && i < dialogResults.length-1){
+                if(dialogResults[i] == null){
+                    valuesNotNull = false;
+                }
+                i++;
+            }
+            
+            //only instantiate vertex if the values are not null
+            if(valuesNotNull){
+                //set contoller values
+                newUserInToVarController.setType((VarType)dialogResults[0]);
+                newUserInToVarController.setName((String)dialogResults[1]);
+                
+                //set up vertex
+                setUpNewVertex(newUserInToVar);
+                
+                //add vertex view to canvas
+                mainZc.getChildren().addAll(newUserInToVar.getView());
+                
+                //add vertex to flowchart
+                flowchart.addVertex(newUserInToVar);
+                
+                //add variable to flowchart
+                Var newVar = flowchart.addVar(newUserInToVarController.getType(), newUserInToVarController.getName(), newUserInToVarController.getName());
+                newUserInToVarController.setVar(newVar);
+                        
+                //update vertex view label
+                newUserInToVar.getView().updateLabel(newUserInToVar.getController().getVertexLabel());
+                
+            }
+            
+        });        
+        
         //set event handler for new connection button
-        connectionBtn.setOnAction((ActionEvent e) -> {
+        connectionBtn.setOnAction(e -> {
             resetCanvasSize();
             
             //deselect any currently selected node
@@ -271,7 +334,6 @@ public class FlowJava extends Application {
         //add start and stop vertices to canvas
         mainZc.getChildren().addAll(stopVertex.getView(), startVertex.getView());
         
-        
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
         engine.put("x", 5);
@@ -317,7 +379,7 @@ public class FlowJava extends Application {
                 chosenParent = v;
                 canvasSp.setCursor(Cursor.CROSSHAIR);
             } else if (!chosenParent.equals(v)) {
-                ////if(chosenParent.getController().getMaxChildren()!=chosenParent.getChildVertices().size()){
+                if(chosenParent.getController().getMaxChildren()!=chosenParent.getChildVertices().size()){
                     //create edge
                     Edge newEdge = flowchart.addEdge(chosenParent, v);
                     newEdge.getController().setEdge(newEdge);
@@ -344,7 +406,8 @@ public class FlowJava extends Application {
                     connectionBtn.setStyle("");
                     deselectVertex();
                     newEdgeView.toBack();
-                ////}
+                    newEdgeView.setX2(v.getView().getTranslateX()+(v.getView().getWidth()/2));
+                }
             }
         }
     }
@@ -426,6 +489,10 @@ public class FlowJava extends Application {
             VarDeclaration vController = (VarDeclaration) v.getController();
             flowchart.removeVar(vController.getVar());
         }
+        if(v.getController() instanceof UserInputToVariable) {
+            UserInputToVariable vController = (UserInputToVariable) v.getController();
+            flowchart.removeVar(vController.getVar());
+        }
     }
     
     /**
@@ -438,83 +505,6 @@ public class FlowJava extends Application {
         
         //remove edge from flowchart
         flowchart.removeEdge(e);
-    }
-    
-    public static Object parseVal(VarType type, String val){
-        switch(type){
-            case STRING:
-                return val;
-            case BOOLEAN:
-                if(val.equals("true") || val.equals("false")){
-                    return Boolean.valueOf(val);
-                }
-                return null;
-            case CHARACTER:
-                if(val.length()> 1){
-                    return null;
-                }
-                return val.charAt(0);
-            case INTEGER:
-                try{
-                    return Integer.valueOf(val);
-                }
-                catch(NumberFormatException e){
-                    return null;
-                }
-            case DOUBLE:
-                try{
-                    return Double.valueOf(val);
-                }
-                catch(NumberFormatException e){
-                    return null;
-                }
-            case FLOAT:
-                try{
-                    return Float.valueOf(val);
-                }
-                catch(NumberFormatException e){
-                    return null;
-                }
-            case LONG:
-                try{
-                    return Long.valueOf(val);
-                }
-                catch(NumberFormatException e){
-                    return null;
-                }
-            case SHORT:
-                try{
-                    return Short.valueOf(val);
-                }
-                catch(NumberFormatException e){
-                    return null;
-                }
-            default:
-                return null;
-        }
-    }
-    
-    public static Object sampleVal(VarType type){
-        switch(type){
-            case STRING:
-                return "string";
-            case BOOLEAN:
-                return true;
-            case CHARACTER:
-                return 'c';
-            case INTEGER:
-                return 1;
-            case DOUBLE:
-                return 1.1;
-            case FLOAT:
-                return 1.1;
-            case LONG:
-                return 1;
-            case SHORT:
-                return 1;
-            default:
-                return null;
-        }
     }
     
 }

@@ -51,7 +51,6 @@ public class ExpressionHBox extends HBox{
         opMap.put("subtract","-");
         opMap.put("times", "*");
         opMap.put("divide", "/");
-        opMap.put("power", "**");
         opMap.put("mod", "%");
         opMap.put("equals", "==");
         opMap.put("not equals", "!=");
@@ -78,7 +77,7 @@ public class ExpressionHBox extends HBox{
         operatorVBox.setPadding(new Insets(0, 5, 0, 5));
         operatorVBox.setAlignment(Pos.TOP_CENTER);
         operatorCmbx.setPromptText("operator");
-        operatorCmbx.setItems(FXCollections.observableArrayList("add/concat", "subtract", "times", "divide", "power", "mod",
+        operatorCmbx.setItems(FXCollections.observableArrayList("add/concat", "subtract", "times", "divide", "mod",
                 "equals", "not equals", "or", "and"));
         operatorCmbx.setOnAction(e -> {
             CreateExprDialog.updateExprText();
@@ -148,10 +147,10 @@ public class ExpressionHBox extends HBox{
         }
     }
     
-    public Boolean isSyntaxValid(){
+    public Boolean isComplete(){
         boolean isValid;
         if(getChildren().get(1) instanceof ExpressionHBox){
-            isValid = ((ExpressionHBox)getChildren().get(1)).isSyntaxValid();
+            isValid = ((ExpressionHBox)getChildren().get(1)).isComplete();
         }
         else{
             isValid = !lExpressionTxtFld.getText().isEmpty();
@@ -160,7 +159,7 @@ public class ExpressionHBox extends HBox{
             isValid = !(operatorCmbx.getValue() == null);
         }
         if(getChildren().get(3) instanceof ExpressionHBox && isValid){
-            isValid = ((ExpressionHBox)getChildren().get(3)).isSyntaxValid();
+            isValid = ((ExpressionHBox)getChildren().get(3)).isComplete();
         }
         else if(isValid){
             isValid = !rExpressionTxtFld.getText().isEmpty();
@@ -168,22 +167,8 @@ public class ExpressionHBox extends HBox{
         return isValid;
     }
     
-    public ArrayList<String> textFldVals(){
-        ArrayList<String> textFldVals = new ArrayList<>();
-        if(getChildren().get(1) instanceof ExpressionHBox){
-            textFldVals.addAll(((ExpressionHBox)getChildren().get(1)).textFldVals());
-        }
-        else{
-            textFldVals.add(lExpressionTxtFld.getText());
-        }
-        if(getChildren().get(3) instanceof ExpressionHBox){
-            textFldVals.addAll(((ExpressionHBox)getChildren().get(3)).textFldVals());
-        }
-        else{
-            textFldVals.add(rExpressionTxtFld.getText());
-        }
-        return textFldVals;
-    }
+    
+
     
     
 }
