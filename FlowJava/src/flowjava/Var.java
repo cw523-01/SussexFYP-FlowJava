@@ -14,9 +14,9 @@ public class Var {
     //name
     private final String name;
     //value
-    private String value;
+    private Object value;
     
-    public Var(VarType type, String name, String value){
+    public Var(VarType type, String name, Object value){
         this.name = name;
         this.type = type;
         this.value = value;
@@ -30,11 +30,11 @@ public class Var {
         return type;
     }
     
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
     
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
     

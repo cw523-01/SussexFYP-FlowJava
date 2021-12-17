@@ -53,6 +53,7 @@ public class ExpressionHBox extends HBox{
         opMap.put("divide", "/");
         opMap.put("mod", "%");
         opMap.put("equals", "==");
+        opMap.put("string variable equals", ".equals(");
         opMap.put("not equals", "!=");
         opMap.put("or", "||");
         opMap.put("and", "&&");
@@ -77,8 +78,11 @@ public class ExpressionHBox extends HBox{
         operatorVBox.setPadding(new Insets(0, 5, 0, 5));
         operatorVBox.setAlignment(Pos.TOP_CENTER);
         operatorCmbx.setPromptText("operator");
-        operatorCmbx.setItems(FXCollections.observableArrayList("add/concat", "subtract", "times", "divide", "mod",
-                "equals", "not equals", "or", "and"));
+        ArrayList<String> opKeys = new ArrayList<>();
+        opKeys.addAll(opMap.keySet());
+        java.util.Collections.sort(opKeys);
+        
+        operatorCmbx.setItems(FXCollections.observableArrayList(opKeys));
         operatorCmbx.setOnAction(e -> {
             CreateExprDialog.updateExprText();
         });
@@ -124,16 +128,32 @@ public class ExpressionHBox extends HBox{
             }
             return "(" + lExpressionTxtFld.getText() + "  " + rExpressionTxtFld.getText() + ")";
         }
-        if(getChildren().get(1) instanceof ExpressionHBox && getChildren().get(3) instanceof ExpressionHBox){
-                return "(" + ((ExpressionHBox)getChildren().get(1)).getExprString() + " " + opMap.get(operatorCmbx.getValue()) + " " + ((ExpressionHBox)getChildren().get(3)).getExprString() + ")";
+        if (getChildren().get(1) instanceof ExpressionHBox && getChildren().get(3) instanceof ExpressionHBox) {
+            if(operatorCmbx.getValue().equals("string variable equals")){
+                return "(" + ((ExpressionHBox) getChildren().get(1)).getExprString()+ opMap.get(operatorCmbx.getValue())+ ((ExpressionHBox) getChildren().get(3)).getExprString() + "))";
+            } else {
+                return "(" + ((ExpressionHBox) getChildren().get(1)).getExprString() + " " + opMap.get(operatorCmbx.getValue()) + " " + ((ExpressionHBox) getChildren().get(3)).getExprString() + ")";
             }
-            if(getChildren().get(1) instanceof ExpressionHBox){
-                return "(" + ((ExpressionHBox)getChildren().get(1)).getExprString() + " " + opMap.get(operatorCmbx.getValue()) + " " + rExpressionTxtFld.getText() + ")";
+        }
+        if (getChildren().get(1) instanceof ExpressionHBox) {
+            if(operatorCmbx.getValue().equals("string variable equals")){
+                return "(" + ((ExpressionHBox) getChildren().get(1)).getExprString() + opMap.get(operatorCmbx.getValue()) + rExpressionTxtFld.getText() + "))";
+            } else {
+                return "(" + ((ExpressionHBox) getChildren().get(1)).getExprString() + " " + opMap.get(operatorCmbx.getValue()) + " " + rExpressionTxtFld.getText() + ")";
             }
-            if(getChildren().get(3) instanceof ExpressionHBox){
-                return "(" + lExpressionTxtFld.getText() + " " + opMap.get(operatorCmbx.getValue()) + " " + ((ExpressionHBox)getChildren().get(3)).getExprString() + ")";
+        }
+        if (getChildren().get(3) instanceof ExpressionHBox) {
+            if(operatorCmbx.getValue().equals("string variable equals")){
+                return "(" + lExpressionTxtFld.getText() + opMap.get(operatorCmbx.getValue()) + ((ExpressionHBox) getChildren().get(3)).getExprString() + "))";
+            } else {
+                return "(" + lExpressionTxtFld.getText() + " " + opMap.get(operatorCmbx.getValue()) + " " + ((ExpressionHBox) getChildren().get(3)).getExprString() + ")";
             }
-        return "(" + lExpressionTxtFld.getText() + " " + opMap.get(operatorCmbx.getValue()) + " " + rExpressionTxtFld.getText() + ")";
+        }
+        if(operatorCmbx.getValue().equals("string variable equals")){
+            return "(" + lExpressionTxtFld.getText() + opMap.get(operatorCmbx.getValue()) + rExpressionTxtFld.getText() + "))";
+        } else {
+            return "(" + lExpressionTxtFld.getText() + " " + opMap.get(operatorCmbx.getValue()) + " " + rExpressionTxtFld.getText() + ")";
+        }
     }
     
     public void resetExpression(Node n){

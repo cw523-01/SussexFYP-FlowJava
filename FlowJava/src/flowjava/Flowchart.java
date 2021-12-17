@@ -18,6 +18,8 @@ public class Flowchart {
     //variables of the flowchart
     private ArrayList<Var> variables;
     
+    private Vertex startVertex;
+    
     public Flowchart(){
         //instantiate lists
         vertices = new ArrayList<>();
@@ -180,5 +182,14 @@ public class Flowchart {
     public ArrayList<Var> getVariables() {
         return variables;
     }
+
+    public void setStartVertex(Vertex startVertex) {
+        this.startVertex = startVertex;
+    }
+
+    public Vertex getStartVertex() {
+        return startVertex;
+    }
+    
     
 }

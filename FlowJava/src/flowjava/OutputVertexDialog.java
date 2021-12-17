@@ -1,4 +1,8 @@
-
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package flowjava;
 
 import java.util.ArrayList;
@@ -7,7 +11,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
@@ -18,58 +21,38 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Used to display dialog box for an input form for variable declaration vertices
  *
  * @author cwood
  */
-public class VarDecDialog {
-    //data type
-    private VarType type;
-    //variable name and value
-    private String name, val;
-    
-    private ComboBox<VarType> typeCmbx;
-    
+public class OutputVertexDialog {
     private TextField valueTxtFld;
     
     private ExpressionHBox exprHbx;
+    //output value
+    private String val;
+    
+    private boolean valid;
     
     private boolean usingExpr;
     
-    public Object[] display(ArrayList<Var> variables) {
-        //set the fields to empty values
-        type = null;
-        name = "";
+    public Object[] display() {
+        valid = false;
         val = "";
         exprHbx = null;
         usingExpr = false;
-        
-        ArrayList<String> varNames = new ArrayList<>();
-        for(Var v: variables){
-            varNames.add(v.getName());
-        }
         
         //instantiate the stage
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
         
-        //instantiate combo box for choosing a data type
-        typeCmbx = new ComboBox<>();
-        typeCmbx.setItems(FXCollections.observableArrayList(VarType.values()));
-        typeCmbx.setPromptText("Type");
-        
-        //instantiate text field for entering variable name
-        TextField nameTxtFld = new TextField();
-        nameTxtFld.setPromptText("Name");
-        
         //instantiate combo box for choosing how to enter value
         ComboBox<String> valCmbx = new ComboBox<>();
         valCmbx.setPromptText("Value");
-        valCmbx.setItems(FXCollections.observableArrayList("Given Value", "Expression", "Null"));
+        valCmbx.setItems(FXCollections.observableArrayList("Given Value", "Expression"));
         
         //instantiate text field for typing a given value
         valueTxtFld = new TextField();
-        valueTxtFld.setPromptText("Value");
+        valueTxtFld.setPromptText("Value or Variable name");
         
         Text exprSavedTxt = new Text("  :saved:  ");
         exprSavedTxt.setVisible(false);
@@ -108,45 +91,32 @@ public class VarDecDialog {
         Button confirmBtn = new Button("Confirm");
         confirmBtn.setOnAction(e -> {
             //validate input
-            if(typeCmbx.getValue() == null || nameTxtFld.getText().equals("")){
-                showAlert(AlertType.ERROR, "empty values!");
-            } else if (varNames.contains(nameTxtFld.getText())){
-                showAlert(AlertType.ERROR, "variable name already used!");
-            } else if(!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")){
-                showAlert(AlertType.ERROR, "variable name is invalid!");
-            } else {
-                if(valCmbx.getValue() == null){
-                    showAlert(AlertType.ERROR, "please specify variable value!");
+            if(valCmbx.getValue() == null){
+                    showAlert(Alert.AlertType.ERROR, "please specify variable value!");
                     return;
-                }
-                switch(valCmbx.getValue()){
-                    case "Null":
-                        val = "null";
-                        break;
-                    case "Given Value":
-                        if(valueTxtFld.getText().isEmpty()){
-                            showAlert(AlertType.ERROR, "please specify the value!");
-                            return;
-                        }
-                        if(exprHbx == null){
-                            exprHbx = new ExpressionHBox(false);
-                        }
-                        val = valueTxtFld.getText();
-                        break;
-                        
-                    case "Expression":
-                        if(exprHbx == null){
-                            showAlert(AlertType.ERROR, "please create expression!");
-                            return;
-                        }
-                        usingExpr = true;
-                        String expr = exprHbx.getExprString();
-                        val = expr;
-                }
-                type = (VarType)typeCmbx.getValue();
-                name = nameTxtFld.getText();
-                stage.close();
             }
+            switch(valCmbx.getValue()){
+                case "Given Value":
+                    if(valueTxtFld.getText().isEmpty()){
+                        showAlert(Alert.AlertType.ERROR, "please specify the value!");
+                        return;
+                    }
+                    val = valueTxtFld.getText();
+                    valid = true;
+                    break;
+                    
+                case "Expression":
+                    if(exprHbx == null){
+                        showAlert(Alert.AlertType.ERROR, "please create expression!");
+                        return;
+                    }
+                    String expr = exprHbx.getExprString();
+                    val = expr;
+                    valid = true;
+                    usingExpr = true;
+                    break;
+            }
+            stage.close();   
         });
 
         //instantiate HBox for positioning confirm button
@@ -157,20 +127,20 @@ public class VarDecDialog {
         
         //instantiate root node
         VBox root = new VBox();
-        root.getChildren().addAll(typeCmbx, nameTxtFld, valCmbx, valInputsHBox, confirmHBox);
+        root.getChildren().addAll(valCmbx, valInputsHBox, confirmHBox);
         root.setPadding(new Insets(10, 50, 50, 50));
         
         //instantiate and show scene
-        Scene scene = new Scene(root, 400, 200);          
-        stage.setTitle("Variable Declaration");
+        Scene scene = new Scene(root, 400, 150);          
+        stage.setTitle("Output");
         stage.setScene(scene);
         stage.showAndWait();
         
         //return input
-        return new Object[]{type, name, val, exprHbx, usingExpr};
+        return new Object[]{val,exprHbx,valid,usingExpr};
     }
     
-    private void showAlert(AlertType alertType, String message){
+    private void showAlert(Alert.AlertType alertType, String message){
         Alert customAlert = new Alert(alertType);
         customAlert.setContentText(message);
         customAlert.show();

@@ -23,7 +23,7 @@ import javafx.stage.Stage;
  *
  * @author cwood
  */
-public class UserInDialog {
+public class UserInVertexDialog {
     //data type
     private VarType type;
     //variable name and value

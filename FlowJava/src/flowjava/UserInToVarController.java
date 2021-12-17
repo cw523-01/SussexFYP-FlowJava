@@ -9,7 +9,7 @@ package flowjava;
  *
  * @author cwood
  */
-public class UserInputToVariable extends VertexController{
+public class UserInToVarController extends VertexController{
     private VarType type;
     private String name;
     private Var var;

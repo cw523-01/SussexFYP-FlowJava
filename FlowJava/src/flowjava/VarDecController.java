@@ -6,12 +6,13 @@ package flowjava;
  *
  * @author cwood
  */
-public class VarDeclaration extends VertexController {
+public class VarDecController extends VertexController {
     
     private VarType type;
     private String name;
     private String value;
     private ExpressionHBox exprHbx;
+    private boolean usingExpr;
     
     private Var var;
 
@@ -65,4 +66,13 @@ public class VarDeclaration extends VertexController {
     public void setExprHbx(ExpressionHBox exprHbx) {
         this.exprHbx = exprHbx;
     }
+
+    public boolean isUsingExpr() {
+        return usingExpr;
+    }
+
+    public void setUsingExpr(boolean usingExpr) {
+        this.usingExpr = usingExpr;
+    }
+    
 }

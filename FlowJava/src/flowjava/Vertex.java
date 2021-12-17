@@ -7,7 +7,6 @@ package flowjava;
 
 import java.util.ArrayList;
 import java.util.List;
-import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Shape;
 import javafx.util.Pair;
 

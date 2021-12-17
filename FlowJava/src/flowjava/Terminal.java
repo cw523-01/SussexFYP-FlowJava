@@ -36,5 +36,9 @@ public class Terminal extends VertexController{
         }
         return "Ends";
     }
+
+    public Boolean getIsStart() {
+        return isStart;
+    }
     
 }

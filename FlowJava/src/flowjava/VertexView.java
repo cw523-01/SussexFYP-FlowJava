@@ -2,7 +2,6 @@
 package flowjava;
 
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 
@@ -30,7 +29,7 @@ public class VertexView extends StackPane{
         this.selectedStyle = selectedStyle;
         backgroundShape.setStyle(defaultStyle);
         label = new Text("");
-        getChildren().addAll(backgroundShape, label);
+        getChildren().addAll(backgroundShape,label);
     }
     
     public Vertex getVertex() {
@@ -53,6 +52,10 @@ public class VertexView extends StackPane{
         this.selectedStyle = selectedStyle;
     }
 
+    public void setBackgroundShape(Shape backgroundShape) {
+        this.backgroundShape = backgroundShape;
+    }
+    
     public Shape getBackgroundShape() {
         return backgroundShape;
     }
@@ -60,5 +63,12 @@ public class VertexView extends StackPane{
     public void updateLabel(String s){
         label.setText(s);
     }
+
+    public Text getLabel() {
+        return label;
+    }
+    
+    
+    
     
 }
