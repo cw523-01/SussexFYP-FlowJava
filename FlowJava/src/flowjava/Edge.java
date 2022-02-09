@@ -1,36 +1,41 @@
-
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package flowjava;
 
+
+import javafx.scene.shape.Polyline;
+import javafx.scene.Group;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.collections.ListChangeListener;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.paint.Color;
+
 /**
- * edge model for flowchart edges
- * 
+ *
  * @author cwood
  */
 public class Edge{
-    //controller
     private final EdgeController controller;
-    //view
     private final EdgeView view;
     
     public Edge(double x1, double y1, double x2, double y2, EdgeController controller){
-        //assign controller and view
+        //assign controller
         this.controller = controller;
-        view = new EdgeView(x1,y1,x2,y2,this);
+        this.view = new EdgeView(x1,y1,x2,y2,this);
     }
+    
 
-    /**
-     * getter for controller
-     * @return controller
-     */
     public EdgeController getController() {
         return controller;
     }
 
-    /**
-     * getter for view
-     * @return view
-     */
-    public EdgeView getView() {
+    EdgeView getView() {
         return view;
     }
+    
 }

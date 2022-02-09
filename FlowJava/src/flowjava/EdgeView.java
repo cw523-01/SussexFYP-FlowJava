@@ -1,4 +1,8 @@
-
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package flowjava;
 
 import javafx.beans.property.SimpleBooleanProperty;
@@ -11,11 +15,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Polyline;
 
 /**
- * Edge view for flowchart edges
  *
  * @author cwood
  */
-public class EdgeView  extends Group{
+public class EdgeView extends Group{
     //the x coordinates for each end of the edge
     private SimpleDoubleProperty x1 = new SimpleDoubleProperty();
     private SimpleDoubleProperty x2 = new SimpleDoubleProperty();
@@ -24,15 +27,15 @@ public class EdgeView  extends Group{
     private SimpleDoubleProperty y2 = new SimpleDoubleProperty();
     //the body (main line) of the arrow 
     private Polyline mainLine = new Polyline();
-    //the line for the lineHead of the arrow
-    private Polyline lineHead = new Polyline();
-    //boolean for if the lineHead of the arrow should be visible
+    //the line for the head of the arrow
+    private Polyline head = new Polyline();
+    //boolean for if the head of the arrow should be visible
     private SimpleBooleanProperty headVisible = new SimpleBooleanProperty(true);
     //a scaler for reducing the size of the ends of the arrow
     private final double ARROW_SCALER = 0;
-    //the angle of the arrow lineHead tips from the main line
+    //the angle of the arrow head tips from the main line
     private final double ARROWHEAD_ANGLE = Math.toRadians(20);
-    //the lendth of the arrow lineHead tips
+    //the lendth of the arrow head tips
     private final double ARROWHEAD_LENGTH = 10;
     //the edge that this edge view displays
     private final Edge edge;
@@ -47,21 +50,21 @@ public class EdgeView  extends Group{
         //assign edge
         this.edge = edge;
         
-        //add the body and lineHead of the arrow to the group
-        getChildren().addAll(mainLine, lineHead);
+        //add the body and head of the arrow to the group
+        getChildren().addAll(mainLine, head);
         
         //set the style class for the arrow components
         mainLine.getStyleClass().setAll("arrow");
-        lineHead.getStyleClass().setAll("arrow");
-        lineHead.getStyleClass().add("arrowhead");
+        head.getStyleClass().setAll("arrow");
+        head.getStyleClass().add("arrowhead");
 
         mainLine.setStrokeWidth(2);
-        lineHead.setStrokeWidth(2);
+        head.setStrokeWidth(2);
         
         //add a lister to update the groups style classes 
         getStyleClass().addListener((ListChangeListener<? super String>) c -> {
             c.next();
-            for(Polyline p : new Polyline[]{mainLine, lineHead}){
+            for(Polyline p : new Polyline[]{mainLine, head}){
                 p.getStyleClass().addAll(c.getAddedSubList());
                 p.getStyleClass().removeAll(c.getRemoved());
             }
@@ -73,8 +76,8 @@ public class EdgeView  extends Group{
         this.y1.addListener((l,o,n) -> update());
         this.y2.addListener((l,o,n) -> update());
         
-        //bind the arrow heads visibility with the lineHead visible boolean
-        lineHead.visibleProperty().bind(headVisible);
+        //bind the arrow heads visibility with the head visible boolean
+        head.visibleProperty().bind(headVisible);
         
         update();
     }
@@ -93,16 +96,16 @@ public class EdgeView  extends Group{
         //set the coordinates of the line
         mainLine.getPoints().setAll(newX1,newY1,newX2,newY2);
 
-        //update the arrow lineHead components
+        //update the arrow head components
         double theta = Math.atan2(newY2-newY1, newX2-newX1);
         //get the first points coordinates
         double x = newX2 - Math.cos(theta + ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
         double y = newY2 - Math.sin(theta + ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
-        this.lineHead.getPoints().setAll(x,y,newX2,newY2);
+        this.head.getPoints().setAll(x,y,newX2,newY2);
         //get the second points coordinates
         x = newX2 - Math.cos(theta - ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
         y = newY2 - Math.sin(theta - ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
-        this.lineHead.getPoints().addAll(x,y);
+        this.head.getPoints().addAll(x,y);
     }
     
     /**
@@ -137,27 +140,17 @@ public class EdgeView  extends Group{
         this.y2.set(y2);
     }
 
-    /**
-     * add effects to the edges lines to show it is selected
-     */
     public void select() {
-        DropShadow selectedBorderEffect = new DropShadow(
+        DropShadow borderEffect = new DropShadow(
                 BlurType.THREE_PASS_BOX, Color.RED, 2, 1, 0, 0
         );
-        mainLine.setEffect(selectedBorderEffect);
-        lineHead.setEffect(selectedBorderEffect);
+        mainLine.setEffect(borderEffect);
+        head.setEffect(borderEffect);
     }
 
-    /**
-     * remove selected line effects
-     */
     void deselect() {
         mainLine.setEffect(null);
-        lineHead.setEffect(null);
-    }
-
-    public Edge getEdge() {
-        return edge;
+        head.setEffect(null);
     }
     
 }
