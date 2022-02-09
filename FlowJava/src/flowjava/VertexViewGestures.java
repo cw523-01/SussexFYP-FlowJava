@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package flowjava;
 
 import java.util.ArrayList;
@@ -11,6 +7,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.util.Pair;
 
 /**
+ * Provides FlowJava with the event handlers for vertex views
  *
  * @author cwood
  */
@@ -77,12 +74,12 @@ public class VertexViewGestures {
             for(Pair<Edge,Boolean> c: vView.getVertex().getConnections()){
                 EdgeView cView = c.getKey().getView();
                 if(c.getValue()){
-                    cView.setX1(vView.getTranslateX()+(vView.getWidth()/2));
-                    cView.setY1(vView.getTranslateY()+vView.getHeight());
+                    cView.setX1(vView.getVertex().getController().getChildEdgeX(cView));
+                    cView.setY1(vView.getVertex().getController().getChildEdgeY(cView));
                 }
                 else{
-                    cView.setX2(vView.getTranslateX()+(vView.getWidth()/2));
-                    cView.setY2(vView.getTranslateY());
+                    cView.setX2(vView.getVertex().getController().getParentEdgeX(cView));
+                    cView.setY2(vView.getVertex().getController().getParentEdgeY(cView));
                 }
             }
             
