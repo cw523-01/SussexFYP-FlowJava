@@ -2,7 +2,12 @@
 package flowjava;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -30,6 +35,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import javax.script.ScriptException;
@@ -65,6 +71,10 @@ public class FlowJava extends Application {
     
     private VBox rightSidebarVb;
     private Text defaultRSTxt;
+    
+    private Thread runProgThread;
+    
+    private Button editVertexBtn;
     
     @Override
     public void start(Stage primaryStage) throws ScriptException {
@@ -106,19 +116,67 @@ public class FlowJava extends Application {
         toolbarHb.setStyle("-fx-padding: 10;" + "-fx-border-style: solid inside;"
         + "-fx-border-width: 2;" + "-fx-border-color: lightgrey;");
         toolbarHb.setMinHeight(100);
+        toolbarHb.setSpacing(10);
         
         //add tools to toolbar
-        File file = new File("images/StartImg.png");
-        Image image = new Image(file.toURI().toString());
+        File toolbarImgFile = new File("images/StartImg.png");
+        Image runImg = new Image(toolbarImgFile.toURI().toString());
         ImageView runImgView = new ImageView();
         runImgView.setPreserveRatio(true);
         runImgView.setFitHeight(75);
-        runImgView.setImage(image);
+        runImgView.setImage(runImg);
+        
+        //add tools to toolbar
+        toolbarImgFile = new File("images/ToJavaImg.png");
+        Image convertImg = new Image(toolbarImgFile.toURI().toString());
+        ImageView convertImgView = new ImageView();
+        convertImgView.setPreserveRatio(true);
+        convertImgView.setFitHeight(75);
+        convertImgView.setImage(convertImg);
+        
         runImgView.setOnMouseClicked((MouseEvent e) -> {
+            /*Runnable runnable = () -> {
+                progRunner.runProgram(flowchart);
+                runImgView.setOpacity(1);
+                runImgView.setDisable(false);
+                convertImgView.setOpacity(1);
+                convertImgView.setDisable(false);
+            };
+            runImgView.setOpacity(0.5);
+            runImgView.setDisable(true);
+            convertImgView.setOpacity(0.5);
+            convertImgView.setDisable(true);
+            runProgThread = new Thread(runnable);
+            runProgThread.start();*/
             progRunner.runProgram(flowchart);
         });
+        
+        convertImgView.setOnMouseClicked((MouseEvent e) -> {
+            if(progRunner.validateStructure(flowchart)){
+                FileChooser fileChooser = new FileChooser();
+
+                //Set extension filter for text files
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Java file (*.java)", "*.java");
+                fileChooser.getExtensionFilters().add(extFilter);
+
+                //Show save newJavaFile dialog
+                File newJavaFile = fileChooser.showSaveDialog(primaryStage);
+
+                if (newJavaFile != null) {
+                    String javaProgram = progRunner.convertToJava(flowchart, newJavaFile.getName().substring(0,newJavaFile.getName().length()-5));
+                    saveTextToFile(javaProgram, newJavaFile);
+                    showAlert(Alert.AlertType.INFORMATION, "Program converted to java file");
+                }
+            } else {
+               showAlert(Alert.AlertType.ERROR, "Program structure is invalid");
+            }
+           
+        });
+        
         Tooltip.install(runImgView, new Tooltip("Run Program"));
-        toolbarHb.getChildren().addAll(runImgView);
+        Tooltip.install(convertImgView, new Tooltip("Convert Program to Java File"));
+        
+        toolbarHb.getChildren().addAll(runImgView, convertImgView);
         
         //instantiate HBox for the canvas
         HBox canvasHb = new HBox();
@@ -201,8 +259,8 @@ public class FlowJava extends Application {
             newVarDecController.setVertex(newVarDeclaration);
             
             //open variable declaration fields input form dialog
-            NewVertexDialog nVD = new NewVertexDialog();
-            Object[] dialogResults = nVD.display("Variable Declaration",flowchart.getVariables());
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("Variable Declaration",flowchart.getVariables(), false, null);
             boolean valuesNotNull = true;
             int i = 0;
             
@@ -265,8 +323,8 @@ public class FlowJava extends Application {
             
             
             //open variable declaration fields input form dialog
-            NewVertexDialog nVD = new NewVertexDialog();
-            Object[] dialogResults = nVD.display("User Input to Variable", flowchart.getVariables());
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("User Input to Variable", flowchart.getVariables(), false, null);
             
             boolean valuesNotNull = true;
             int i = 0;
@@ -328,8 +386,8 @@ public class FlowJava extends Application {
             
             
             //open variable declaration fields input form dialog
-            NewVertexDialog nVD = new NewVertexDialog();
-            Object[] dialogResults = nVD.display("Output", null);
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("Output", null, false, null);
             
             boolean isValid = (boolean)dialogResults[2];
             
@@ -378,8 +436,8 @@ public class FlowJava extends Application {
             
             
             //open variable declaration fields input form dialog
-            NewVertexDialog nVD = new NewVertexDialog();
-            Object[] dialogResults = nVD.display("Variable Assignment", null);
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("Variable Assignment", null, false, null);
             
             boolean isValid = (boolean)dialogResults[3];
             
@@ -428,7 +486,6 @@ public class FlowJava extends Application {
             String ifStmtDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
             String ifStmtSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
             
-            
             //instantiate Vertex model view and controller
             Vertex newIfStmt = new Vertex(new IfStmtController(), ifDiamond, ifStmtDefStyle, ifStmtSelStyle, true);
             IfStmtController newIfStmtController = (IfStmtController)newIfStmt.getController();
@@ -442,8 +499,8 @@ public class FlowJava extends Application {
             newEndIfController.setIfStmt(newIfStmtController);
             
             //open variable declaration fields input form dialog
-            NewVertexDialog nVD = new NewVertexDialog();
-            Object[] dialogResults = nVD.display("If Statement", null);
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("If Statement", null, false, null);
             
             boolean isValid = (boolean)dialogResults[2];
             
@@ -491,6 +548,7 @@ public class FlowJava extends Application {
                         }
                         //deselect previous component
                         deselectComponent();
+                        updateRSidebar(newEdgeView.getEdge());
                     });
                     //add edge to canvas
                     mainZc.getChildren().add(newEdgeView);
@@ -543,8 +601,8 @@ public class FlowJava extends Application {
             newEndWhileController.setWhileCtrl(newWhileController);
             
             //open variable declaration fields input form dialog
-            NewVertexDialog nVD = new NewVertexDialog();
-            Object[] dialogResults = nVD.display("While Loop", null);
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("While Loop", null, false, null);
             
             boolean isValid = (boolean)dialogResults[2];
             
@@ -576,7 +634,6 @@ public class FlowJava extends Application {
                 
                 newEndWhile.getView().setTranslateY(newEndWhile.getView().getTranslateY() + 200);
                 
-                
                 Edge newEdge = flowchart.addEdge(newWhile, newEndWhile);
                 newEdge.getController().setEdge(newEdge);
                 EdgeView newEdgeView = newEdge.getView();
@@ -592,6 +649,7 @@ public class FlowJava extends Application {
                         }
                         //deselect previous component
                         deselectComponent();
+                        updateRSidebar(newEdgeView.getEdge());
                     });
                     //add edge to canvas
                     mainZc.getChildren().add(newEdgeView);
@@ -608,7 +666,6 @@ public class FlowJava extends Application {
                     
                     newEdgeView.makeSubtle();
                     newEdgeView.setIsDeletable(false);
-                    
             }
             
         });
@@ -651,6 +708,7 @@ public class FlowJava extends Application {
                         EdgeView eView = (EdgeView)selectedComponent;
                         mainZc.getChildren().remove(eView);
                         flowchart.removeEdge(eView.getEdge());
+                        updateRSidebar();
                     }
                 }
             }
@@ -664,6 +722,7 @@ public class FlowJava extends Application {
                         if(!(boolean)c.getValue()){
                             deselectComponent();
                             selectedComponent = ((Edge)c.getKey()).getView();
+                            updateRSidebar((Edge)c.getKey());
                             ((Edge)c.getKey()).getView().select();
                             e.consume();
                             break;
@@ -682,6 +741,7 @@ public class FlowJava extends Application {
                         if((boolean)c.getValue()){
                             deselectComponent();
                             selectedComponent = ((Edge)c.getKey()).getView();
+                            updateRSidebar((Edge)c.getKey());
                             ((Edge)c.getKey()).getView().select();
                             e.consume();
                             break;
@@ -694,6 +754,179 @@ public class FlowJava extends Application {
                     e.consume();
                 }
             }
+        });
+        
+        editVertexBtn = new Button("Edit");
+        editVertexBtn.setOnAction(e -> {
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            VertexController currentController = ((VertexView)selectedComponent).getVertex().getController();
+            if(currentController instanceof IfStmtController){
+                IfStmtController currIfStmt = (IfStmtController)currentController;
+                Object[] dialogResults = nVD.display("If Statement", null, true, new Object[]{currIfStmt.getExpr(), currIfStmt.getExprHbx()});
+                
+                boolean isValid = (boolean)dialogResults[2];
+            
+                //only instantiate vertex if the values are not null
+                if (isValid) {
+                    //set contoller values
+                    currIfStmt.setExpr((String) dialogResults[0]);
+                    currIfStmt.setExprHbx((ExpressionHBox) dialogResults[1]);
+
+                    //update vertex view label
+                    String label = currIfStmt.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 18) + "...";
+                    }
+                    currIfStmt.getVertex().getView().updateLabel(label);
+                    updateRSidebar();
+                }
+                
+            } else if (currentController instanceof WhileController){
+                WhileController currWhile = (WhileController)currentController;
+                Object[] dialogResults = nVD.display("While Loop", null, true, new Object[]{currWhile.getExpr(), currWhile.getExprHbx()});
+                boolean isValid = (boolean) dialogResults[2];
+
+                //only instantiate vertex if the values are not null
+                if (isValid) {
+
+                    //set contoller values
+                    currWhile.setExpr((String) dialogResults[0]);
+                    currWhile.setExprHbx((ExpressionHBox) dialogResults[1]);
+
+                    //update vertex view label
+                    String label = currWhile.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 18) + "...";
+                    }
+                    currWhile.getVertex().getView().updateLabel(label);
+                    updateRSidebar();
+                }
+            } else if (currentController instanceof OutputController){
+                OutputController currOutput = (OutputController)currentController;
+                Object[] dialogResults = nVD.display("Output", null, true, new Object[]{currOutput.getValue(), currOutput.getExprHbx()});
+                boolean isValid = (boolean) dialogResults[2];
+
+                //only instantiate vertex if the values are not null
+                if (isValid) {
+                    //set contoller values
+                    currOutput.setValue((String) dialogResults[0]);
+                    currOutput.setExprHbx((ExpressionHBox) dialogResults[1]);
+                    currOutput.setUsingExpr((boolean) dialogResults[3]);
+
+                    //update vertex view label
+                    String label = currOutput.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 15) + "...";
+                    }
+                    currOutput.getVertex().getView().updateLabel(label);
+                    updateRSidebar();
+                }
+
+            } else if (currentController instanceof UserInToVarController){
+                UserInToVarController currUserInToVar = (UserInToVarController)currentController;
+                ArrayList<Var> currVars = flowchart.getVariables();
+                currVars.remove(currUserInToVar.getVar());
+                Object[] dialogResults = nVD.display("User Input to Variable", currVars, true, new Object[]{currUserInToVar.getType(), currUserInToVar.getName()});
+                
+                boolean valuesNotNull = true;
+                int i = 0;
+
+                //check if given values are null
+                while (valuesNotNull && i < dialogResults.length - 1) {
+                    if (dialogResults[i] == null) {
+                        valuesNotNull = false;
+                    }
+                    i++;
+                }
+
+                //only instantiate vertex if the values are not null
+                if (valuesNotNull) {
+                    //set contoller values
+                    currUserInToVar.setType((VarType) dialogResults[0]);
+                    currUserInToVar.setName((String) dialogResults[1]);
+
+                    flowchart.removeVar(currUserInToVar.getVar());
+                    
+                    //update variable in flowchart
+                    Var newVar = flowchart.addVar(currUserInToVar.getType(), currUserInToVar.getName(), "");
+                    currUserInToVar.setVar(newVar);
+
+                    //update vertex view label
+                    String label = currUserInToVar.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 15) + "...";
+                    }
+                    currUserInToVar.getVertex().getView().updateLabel(label);
+
+                }
+
+            } else if (currentController instanceof VarAssignController){
+                VarAssignController currVarAssign = (VarAssignController) currentController;
+                Object[] dialogResults = nVD.display("Variable Assignment", null, true,  new Object[]{currVarAssign.getVarName(), currVarAssign.getValue(), currVarAssign.getExprHbx()});
+
+                boolean isValid = (boolean) dialogResults[3];
+
+                //only instantiate vertex if the values are not null
+                if (isValid) {
+                    //set contoller values
+                    currVarAssign.setVarName((String) dialogResults[0]);
+                    currVarAssign.setValue((String) dialogResults[1]);
+                    currVarAssign.setExprHbx((ExpressionHBox) dialogResults[2]);
+                    currVarAssign.setUsingExpr((boolean) dialogResults[4]);
+
+                    //update vertex view label
+                    String label = currVarAssign.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 19) + "...";
+                    }
+                    currVarAssign.getVertex().getView().updateLabel(label);
+
+                }
+            
+            }else if (currentController instanceof VarDecController){
+                VarDecController currVarDec = (VarDecController) currentController;
+                ArrayList<Var> currVars = flowchart.getVariables();
+                currVars.remove(currVarDec.getVar());
+                Object[] dialogResults = nVD.display("Variable Declaration", currVars, true, new Object[]{currVarDec.getType(), currVarDec.getName(), currVarDec.getValue(), currVarDec.getExprHbx()});
+
+                boolean valuesNotNull = true;
+                int i = 0;
+
+                //check if given values are null
+                while (valuesNotNull && i < dialogResults.length - 1) {
+                    if (dialogResults[i] == null) {
+                        valuesNotNull = false;
+                    }
+                    i++;
+                }
+
+                //only instantiate vertex if the values are not null
+                if (valuesNotNull) {
+                    //set contoller values
+                    currVarDec.setType((VarType) dialogResults[0]);
+                    currVarDec.setName((String) dialogResults[1]);
+                    currVarDec.setValue((String) dialogResults[2]);
+                    currVarDec.setExprHbx((ExpressionHBox) dialogResults[3]);
+                    currVarDec.setUsingExpr((boolean) dialogResults[4]);
+
+                    //update variable in flowchart
+                    Var newVar = flowchart.addVar(currVarDec.getType(), currVarDec.getName(), "");
+                    currVarDec.setVar(newVar);
+
+                    //update vertex view label
+                    String label = currVarDec.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 15) + "...";
+                    }
+                    currVarDec.getVertex().getView().updateLabel(label);
+
+                }
+            }
+            
+            
+                
+            
+            
         });
         
         //set up and show primary stage 
@@ -827,6 +1060,7 @@ public class FlowJava extends Application {
                         deselectComponent();
                         //select this edge
                         selectedComponent = (EdgeView)e.getSource();
+                        updateRSidebar(newEdgeView.getEdge());
                         ((EdgeView)e.getSource()).select();
                     });
                     //add edge to canvas
@@ -858,6 +1092,7 @@ public class FlowJava extends Application {
                     //select this component
                     selectedComponent = newEdgeView;
                     newEdgeView.select();
+                    updateRSidebar(newEdgeView.getEdge());
                 } else {
                     makingConnection = false;
                     canvasSp.setCursor(Cursor.DEFAULT);
@@ -1008,6 +1243,8 @@ public class FlowJava extends Application {
             UserInToVarController vInToVarController = (UserInToVarController) v.getController();
             flowchart.removeVar(vInToVarController.getVar());
         }
+        
+        updateRSidebar();
     }
     
     /**
@@ -1020,6 +1257,7 @@ public class FlowJava extends Application {
         
         //remove edge from flowchart
         flowchart.removeEdge(e);
+        updateRSidebar();
     }
     
     private void updateRSidebar(Vertex v){
@@ -1034,19 +1272,24 @@ public class FlowJava extends Application {
         } else if (v.getController() instanceof EndWhileController) { 
             rightSidebarVb.getChildren().addAll(new Text("End While"), new Text("\nMust be structured properly with \nWhile Loop - see manual"));
         } else if (v.getController() instanceof IfStmtController) { 
-            rightSidebarVb.getChildren().addAll(new Text("If Statement"), new Text("\nMust be structured properly with \nEnd If - see manual"));
+            rightSidebarVb.getChildren().addAll(new Text("If Statement"), new Text("\nMust be structured properly with \nEnd If - see manual"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
         } else if (v.getController() instanceof OutputController) { 
-            rightSidebarVb.getChildren().addAll(new Text("Output"));
+            rightSidebarVb.getChildren().addAll(new Text("Output"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
         } else if (v.getController() instanceof Terminal) { 
             rightSidebarVb.getChildren().addAll(new Text(v.getController().getVertexLabel()));
         } else if (v.getController() instanceof UserInToVarController) { 
-            rightSidebarVb.getChildren().addAll(new Text("User Input To Variable"));
+            rightSidebarVb.getChildren().addAll(new Text("User Input To Variable"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
         } else if (v.getController() instanceof VarAssignController) { 
-            rightSidebarVb.getChildren().addAll(new Text("Variable Assignment"), new Text("\nVariables must be declared before\nyou can assign them a new value"));
+            rightSidebarVb.getChildren().addAll(new Text("Variable Assignment"), new Text("\nVariables must be declared before\nyou can assign them a new value"), editVertexBtn);
         } else if (v.getController() instanceof VarDecController) { 
-            rightSidebarVb.getChildren().addAll(new Text("Variable Declaration"));
+            rightSidebarVb.getChildren().addAll(new Text("Variable Declaration"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
         } else if (v.getController() instanceof WhileController) { 
-            rightSidebarVb.getChildren().addAll(new Text("While Loop"), new Text("\nMust be structured properly with \nEnd While - see manual"));
+            rightSidebarVb.getChildren().addAll(new Text("While Loop"), new Text("\nMust be structured properly with \nEnd While - see manual"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
         }
         
         rightSidebarVb.getChildren().addAll(new Text("\nVertex Description:"), vLblTxtArea);
@@ -1067,6 +1310,32 @@ public class FlowJava extends Application {
         javaDescTxtArea.setEditable(false);
         rightSidebarVb.getChildren().addAll(new Text("\nJava Equivalent:"), javaDescTxtArea);
         
+    }
+    
+    private void updateRSidebar(){
+        rightSidebarVb.getChildren().clear();
+        rightSidebarVb.getChildren().add(defaultRSTxt);
+    }
+    
+    private void updateRSidebar(Edge e){
+        rightSidebarVb.getChildren().clear();
+        rightSidebarVb.getChildren().add(new Text("Connection"));
+        
+        if(!e.getView().isDeletable()){
+            rightSidebarVb.getChildren().add(new Text("\nNot deletable: shows a relationship \nbetween two nodes"));
+        }
+        
+    }
+    
+    private void saveTextToFile(String content, File file) {
+        try {
+            PrintWriter pw;
+            pw = new PrintWriter(file);
+            pw.println(content);
+            pw.close();
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Couldn't save to file");
+        }
     }
     
     private void showAlert(Alert.AlertType alertType, String message){

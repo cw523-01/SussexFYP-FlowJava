@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Stack;
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextInputDialog;
 
@@ -37,6 +38,8 @@ public class ProgramRunner {
     private UserErrReportDialog userErrReportDialog;
     
     private Stack<WhileController> whileStack;
+    
+    private int tabIndex;
     
     /**
      * given a Flowchart fc, runs the program represented by fc
@@ -64,6 +67,7 @@ public class ProgramRunner {
                     }
                 }
         });
+        
         flowJavaOutPrintStream = new PrintStream(new OutputStream() {
                 private StringBuilder line = new StringBuilder();
                 @Override
@@ -202,6 +206,7 @@ public class ProgramRunner {
             }
             
         }
+        
         showAlert(Alert.AlertType.INFORMATION, "Program Run Complete");
     }
     
@@ -397,9 +402,11 @@ public class ProgramRunner {
      * @param message the String message of the desired alert
      */
     private void showAlert(Alert.AlertType alertType, String message){
-        Alert customAlert = new Alert(alertType);
-        customAlert.setContentText(message);
-        customAlert.showAndWait();
+        //Platform.runLater(() -> {
+            Alert customAlert = new Alert(alertType);
+            customAlert.setContentText(message);
+            customAlert.showAndWait();
+        //});
     }
     
     /**
@@ -979,6 +986,192 @@ public class ProgramRunner {
             }
         return vars;
     }
+
+    public String convertToJava(Flowchart fc, String progName) {
+        String javaProg = "import java.io.InputStreamReader;\nimport java.io.BufferedReader;\nimport java.io.IOException;\n\npublic class " 
+                + progName + "{\n\tpublic static void main(String[] args) throws IOException{"
+                + "\n\t\tBufferedReader userInputBr = new BufferedReader(new InputStreamReader(System.in));"
+                + "\n\t\tString userInputString;\n";
+        tabIndex = 2;
+        
+        //stack to hold the vertices that need to be converted
+        Stack<VertexController> controllerStack = new Stack<>();
+        //the controller of the flowchart node currently being converted, initialise as the child of the start node
+        VertexController currentController = fc.getStartVertex().getChildVertices().get(0).getController();
+        //push start node onto stack
+        controllerStack.push(currentController);
+        
+        //while there are still nodes that need converting
+        while(!controllerStack.isEmpty()) {
+            //get next node that needs to be converted
+            currentController = controllerStack.pop();
+            //add lines of java to javaProg based on the class of the controller
+            if(currentController instanceof UserInToVarController){
+                javaProg += convertUserInToVar((UserInToVarController)currentController, tabIndex);
+                controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
+            } else if (currentController instanceof VarDecController){
+                javaProg += convertVarDec((VarDecController)currentController, tabIndex);
+                controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
+            } else if(currentController instanceof OutputController){
+                javaProg += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
+            } else if(currentController instanceof VarAssignController){
+                VarAssignController currVarAssign = (VarAssignController)currentController;
+                javaProg += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
+            } else if(currentController instanceof IfStmtController){
+                IfStmtController currIfStmt = (IfStmtController)currentController;
+                javaProg += convertIf(currIfStmt, tabIndex);
+                controllerStack.push(currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController());
+            } else if(currentController instanceof WhileController){
+                WhileController currWhile = (WhileController)currentController;
+                javaProg += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex);
+                controllerStack.push(currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController());
+            }
+            
+        }
+        javaProg += "\t}\n}";
+        return javaProg;
+    }
     
+    private String convertUserInToVar(UserInToVarController ctrl, int tabIndex){
+        String java = repeatString("\t",tabIndex) + "s = br.readLine();\n";
+        switch (ctrl.getType()){
+            case STRING:
+                java += repeatString("\t",tabIndex) + "String " + ctrl.getName() + " = s;\n";
+                break;
+            case BOOLEAN: 
+                java += repeatString("\t",tabIndex) + "Boolean " + ctrl.getName() + " = Boolean.parseBoolean(s);\n";
+                break;
+            case CHARACTER:
+                java += repeatString("\t",tabIndex) + "Boolean " + ctrl.getName() + " = s.charAt(0);\n";
+                break;
+            case INTEGER:
+                java += repeatString("\t",tabIndex) + "Integer " + ctrl.getName() + " = Integer.parseInt(s);\n";
+                break;
+            case DOUBLE:
+                java += repeatString("\t",tabIndex) + "Double " + ctrl.getName() + " = Double.parseDouble(s);\n";
+                break;
+            case FLOAT:
+                java += repeatString("\t",tabIndex) + "Float " + ctrl.getName() + " = Float.parseFloat(s);\n";
+                break;
+            case LONG:
+                java += repeatString("\t",tabIndex) + "Long " + ctrl.getName() + " = Long.parseLong(s);\n";
+                break;
+            case SHORT:
+                java += repeatString("\t",tabIndex) + "Short " + ctrl.getName() + " = Short.parseShort(s);\n";
+                break;
+        }
+        return java;
+    }
+    
+    private String convertVarDec(VarDecController ctrl, int tabIndex){
+        String java = "";
+        switch (ctrl.getType()){
+            case STRING:
+                java += repeatString("\t",tabIndex) + "String " + ctrl.getName() + " = ";
+                break;
+            case BOOLEAN: 
+                java += repeatString("\t",tabIndex) + "Boolean " + ctrl.getName() + " = ";
+                break;
+            case CHARACTER:
+                java += repeatString("\t",tabIndex) + "Boolean " + ctrl.getName() + " = ";
+                break;
+            case INTEGER:
+                java += repeatString("\t",tabIndex) + "Integer " + ctrl.getName() + " = ";
+                break;
+            case DOUBLE:
+                java += repeatString("\t",tabIndex) + "Double " + ctrl.getName() + " = ";
+                break;
+            case FLOAT:
+                java += repeatString("\t",tabIndex) + "Float " + ctrl.getName() + " = ";
+                break;
+            case LONG:
+                java += repeatString("\t",tabIndex) + "Long " + ctrl.getName() + " = ";
+                break;
+            case SHORT:
+                java += repeatString("\t",tabIndex) + "Short " + ctrl.getName() + " = ";
+                break;
+        }
+        java += ctrl.getValue() + ";\n";
+        return java;
+    }
+
+    private String repeatString(String s, int i){
+        return new String(new char[i]).replace("\0", s);
+    }
+    
+    private String convertIf(IfStmtController ctrl, int tabIndex){
+        String java = repeatString("\t",tabIndex) + "if(" + ctrl.getExpr() + "){\n";
+        tabIndex ++;
+        java += convertIfBranch(ctrl.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex) + repeatString("\t",tabIndex-1) + "}\n" + repeatString("\t",tabIndex-1) + "else{\n";
+        java += convertIfBranch(ctrl.getFalseEdge().getEdge().getController().getChild().getController(), tabIndex) + repeatString("\t",tabIndex-1) + "}\n";
+        return java;
+    }
+    
+    private String convertIfBranch(VertexController currentController, int tabIndex){
+        String java = "";
+        
+        while(!(currentController instanceof EndIfController)){
+            //add lines of java to javaProg based on the class of the controller
+            if(currentController instanceof UserInToVarController){
+                java += convertUserInToVar((UserInToVarController)currentController, tabIndex);
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if (currentController instanceof VarDecController){
+                java += convertVarDec((VarDecController)currentController, tabIndex);
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof OutputController){
+                java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof VarAssignController){
+                VarAssignController currVarAssign = (VarAssignController)currentController;
+                java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof IfStmtController){
+                IfStmtController currIfStmt = (IfStmtController)currentController;
+                java += convertIf(currIfStmt, tabIndex);
+                currentController = currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof WhileController){
+                WhileController currWhile = (WhileController)currentController;
+                java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex);
+                currentController = currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController();
+            }
+        }
+        return java;
+    }
+    
+    private String convertWhileBody(VertexController currentController, int tabIndex){
+        String java = "";
+        tabIndex ++;
+        while(!(currentController instanceof EndWhileController)){
+            //add lines of java to javaProg based on the class of the controller
+            if(currentController instanceof UserInToVarController){
+                java += convertUserInToVar((UserInToVarController)currentController, tabIndex);
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if (currentController instanceof VarDecController){
+                java += convertVarDec((VarDecController)currentController, tabIndex);
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof OutputController){
+                java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof VarAssignController){
+                VarAssignController currVarAssign = (VarAssignController)currentController;
+                java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                currentController = currentController.getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof IfStmtController){
+                IfStmtController currIfStmt = (IfStmtController)currentController;
+                java += convertIf(currIfStmt, tabIndex);
+                currentController = currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController();
+            } else if(currentController instanceof WhileController){
+                WhileController currWhile = (WhileController)currentController;
+                java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex);
+                currentController = currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController();
+            }
+        }
+        return java + repeatString("\t",tabIndex-1) + "}\n";
+    }
     
 }

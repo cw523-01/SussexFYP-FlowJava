@@ -24,7 +24,7 @@ import javafx.stage.Stage;
  *
  * @author cwood
  */
-public class NewVertexDialog {
+public class CreateVertexDialog {
     private TextField valueTxtFld, nameTxtFld;
     private ExpressionHBox exprHbx;
     private boolean valid, usingExpr;
@@ -45,7 +45,7 @@ public class NewVertexDialog {
     ArrayList<String> varNames;
     Object[] results;
     
-    public Object[] display(String newVertexType, ArrayList<Var> variables) {
+    public Object[] display(String newVertexType, ArrayList<Var> variables, Boolean isEdit, Object[] vertexVals) {
         valid = false;
         expr = "";
         exprHbx = null;
@@ -157,6 +157,11 @@ public class NewVertexDialog {
             }
             root.setPadding(new Insets(10, 50, 50, 50));
             
+            if(isEdit){
+                valueTxtFld.setText((String)vertexVals[0]);
+                exprHbx = (ExpressionHBox)vertexVals[1];
+            }
+            
         } else if(newVertexType.equals("Output")){
         
             //instantiate combo box for choosing how to enter value
@@ -225,6 +230,11 @@ public class NewVertexDialog {
             root.getChildren().addAll(valCmbx, valInputsHBox, confirmHBox);
             root.setPadding(new Insets(10, 50, 50, 50));
             
+            if(isEdit){
+                valueTxtFld.setText((String)vertexVals[0]);
+                exprHbx = (ExpressionHBox)vertexVals[1];
+            }
+            
         } else if(newVertexType.equals("User Input to Variable")){
             
             for (Var v : variables) {
@@ -246,6 +256,8 @@ public class NewVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "empty values!");
                 } else if (varNames.contains(nameTxtFld.getText())) {
                     showAlert(Alert.AlertType.ERROR, "variable name already used!");
+                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString")){
+                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\" or \"userInputString\" in flow java");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else {
@@ -265,6 +277,11 @@ public class NewVertexDialog {
             root = new VBox();
             root.getChildren().addAll(typeCmbx, nameTxtFld, confirmHBox);
             root.setPadding(new Insets(10, 50, 50, 50));
+            
+            if(isEdit){
+                typeCmbx.setValue((VarType)vertexVals[0]);
+                nameTxtFld.setText((String)vertexVals[1]);
+            }
             
         } else if (newVertexType.equals("Variable Assignment")) {
             
@@ -339,11 +356,17 @@ public class NewVertexDialog {
             confirmHBox.getChildren().add(confirmBtn);
 
             Text nameTxt = new Text("Variable name:");
-
+            
             //instantiate root node
             root = new VBox();
             root.getChildren().addAll(nameTxt, nameTxtFld, valCmbx, valInputsHBox, confirmHBox);
             root.setPadding(new Insets(10, 50, 50, 50));
+            
+            if(isEdit){
+                nameTxtFld.setText((String)vertexVals[0]);
+                valueTxtFld.setText((String)vertexVals[1]);
+                exprHbx = (ExpressionHBox)vertexVals[2];
+            }
 
         } else if (newVertexType.equals("Variable Declaration")) {
             
@@ -394,6 +417,8 @@ public class NewVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "empty values!");
                 } else if (varNames.contains(nameTxtFld.getText())) {
                     showAlert(Alert.AlertType.ERROR, "variable name already used!");
+                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString")){
+                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\" or \"userInputString\" in flow java");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else {
@@ -451,6 +476,13 @@ public class NewVertexDialog {
             root = new VBox();
             root.getChildren().addAll(typeCmbx, nameTxtFld, valCmbx, valInputsHBox, confirmHBox);
             root.setPadding(new Insets(10, 50, 50, 50));
+            
+            if(isEdit){
+                typeCmbx.setValue((VarType)vertexVals[0]);
+                nameTxtFld.setText((String)vertexVals[1]);
+                valueTxtFld.setText((String)vertexVals[2]);
+                exprHbx = (ExpressionHBox)vertexVals[3];
+            }
         }
         
         //instantiate and show scene
