@@ -11,7 +11,7 @@ public class VarDecController extends VertexController {
     private VarType type;
     private String name;
     private String value;
-    private ExpressionHBox exprHbx;
+    private transient ExpressionHBox exprHbx;
     private boolean usingExpr;
     
     private Var var;

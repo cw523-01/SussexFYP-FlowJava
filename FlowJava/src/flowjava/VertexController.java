@@ -5,15 +5,16 @@
  */
 package flowjava;
 
+import java.io.Serializable;
+
 /**
  * Abstract class for vertex controllers, subclasses are used for converting vertices into Java code
  *
  * @author cwood
  */
-public abstract class VertexController {
+public abstract class VertexController implements Serializable{
     //the vertex model of this controller
     protected Vertex vertex;
-    
     
     abstract public String getJavaDescription();
     

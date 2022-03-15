@@ -1,8 +1,10 @@
 
 package flowjava;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,12 +14,14 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
@@ -34,7 +38,9 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Polyline;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -77,7 +83,7 @@ public class FlowJava extends Application {
     private Button editVertexBtn;
     
     @Override
-    public void start(Stage primaryStage) throws ScriptException {
+    public void start(Stage primaryStage) throws ScriptException, IOException {
         
         progRunner = new ProgramRunner();
         
@@ -119,64 +125,87 @@ public class FlowJava extends Application {
         toolbarHb.setSpacing(10);
         
         //add tools to toolbar
-        File toolbarImgFile = new File("images/StartImg.png");
-        Image runImg = new Image(toolbarImgFile.toURI().toString());
+        File imgFile = new File("images/StartImg.png");
+        Image runImg = new Image(imgFile.toURI().toString());
         ImageView runImgView = new ImageView();
         runImgView.setPreserveRatio(true);
         runImgView.setFitHeight(75);
         runImgView.setImage(runImg);
         
         //add tools to toolbar
-        toolbarImgFile = new File("images/ToJavaImg.png");
-        Image convertImg = new Image(toolbarImgFile.toURI().toString());
+        imgFile = new File("images/ToJavaImg.png");
+        Image convertImg = new Image(imgFile.toURI().toString());
         ImageView convertImgView = new ImageView();
         convertImgView.setPreserveRatio(true);
         convertImgView.setFitHeight(75);
         convertImgView.setImage(convertImg);
         
+        //add tools to toolbar
+        imgFile = new File("images/FunctionsImg.png");
+        Image functionsImg = new Image(imgFile.toURI().toString());
+        ImageView functionsImgView = new ImageView();
+        functionsImgView.setPreserveRatio(true);
+        functionsImgView.setFitHeight(75);
+        functionsImgView.setImage(functionsImg);
+        
         runImgView.setOnMouseClicked((MouseEvent e) -> {
-            /*Runnable runnable = () -> {
+            try {
+                /*Runnable runnable = () -> {
                 progRunner.runProgram(flowchart);
                 runImgView.setOpacity(1);
                 runImgView.setDisable(false);
                 convertImgView.setOpacity(1);
                 convertImgView.setDisable(false);
-            };
-            runImgView.setOpacity(0.5);
-            runImgView.setDisable(true);
-            convertImgView.setOpacity(0.5);
-            convertImgView.setDisable(true);
-            runProgThread = new Thread(runnable);
-            runProgThread.start();*/
-            progRunner.runProgram(flowchart);
+                };
+                runImgView.setOpacity(0.5);
+                runImgView.setDisable(true);
+                convertImgView.setOpacity(0.5);
+                convertImgView.setDisable(true);
+                runProgThread = new Thread(runnable);
+                runProgThread.start();*/
+                
+                progRunner.convertThenCompileProgram(flowchart, true, false, null);
+                //progRunner.runProgram(flowchart);
+            } catch (UserCreatedExprException ex) {
+                System.out.println(ex.getCause());
+            }
         });
+        
+        
         
         convertImgView.setOnMouseClicked((MouseEvent e) -> {
             if(progRunner.validateStructure(flowchart)){
                 FileChooser fileChooser = new FileChooser();
-
+                
                 //Set extension filter for text files
                 FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Java file (*.java)", "*.java");
                 fileChooser.getExtensionFilters().add(extFilter);
-
+                
                 //Show save newJavaFile dialog
                 File newJavaFile = fileChooser.showSaveDialog(primaryStage);
-
+                
                 if (newJavaFile != null) {
-                    String javaProgram = progRunner.convertToJava(flowchart, newJavaFile.getName().substring(0,newJavaFile.getName().length()-5));
+                    String javaProgram = progRunner.convertToJava(flowchart, newJavaFile.getName().substring(0,newJavaFile.getName().length()-5), false, false, null);
                     saveTextToFile(javaProgram, newJavaFile);
                     showAlert(Alert.AlertType.INFORMATION, "Program converted to java file");
                 }
             } else {
                showAlert(Alert.AlertType.ERROR, "Program structure is invalid");
             }
-           
+            
+        });
+        
+        functionsImgView.setOnMouseClicked((MouseEvent e) -> {
+            FunctionManagerDialog fMD = new FunctionManagerDialog(flowchart.getFunctions());
+            flowchart.setFunctions(fMD.display());
         });
         
         Tooltip.install(runImgView, new Tooltip("Run Program"));
         Tooltip.install(convertImgView, new Tooltip("Convert Program to Java File"));
+        Tooltip.install(functionsImgView, new Tooltip("Manage Functions"));
         
-        toolbarHb.getChildren().addAll(runImgView, convertImgView);
+        toolbarHb.setAlignment(Pos.CENTER);
+        toolbarHb.getChildren().addAll(runImgView, convertImgView, functionsImgView);
         
         //instantiate HBox for the canvas
         HBox canvasHb = new HBox();
@@ -191,21 +220,128 @@ public class FlowJava extends Application {
         //instantiate new flowchart component buttons
         connectionBtn = new Button("Connection");
         connectionBtn.setPrefSize(198, 50);
+        
+        imgFile = new File("images/ConnectionImg.png");
+        Image connectionImg = new Image(imgFile.toURI().toString());
+        ImageView connectionImgView = new ImageView();
+        connectionImgView.setPreserveRatio(true);
+        connectionImgView.setFitHeight(30);
+        connectionImgView.setImage(connectionImg);
+        
+        connectionBtn.setGraphic(connectionImgView);
+        connectionBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
         Button varDeclarationBtn = new Button("Variable Declaration");
         varDeclarationBtn.setPrefSize(198, 50);
-        Button userInToVarBtn = new Button("User Input to Variable");
+        
+        imgFile = new File("images/IoImg.png");
+        Image IoImg = new Image(imgFile.toURI().toString());
+        ImageView varDecImgView = new ImageView();
+        varDecImgView.setPreserveRatio(true);
+        varDecImgView.setFitHeight(30);
+        varDecImgView.setImage(IoImg);
+        
+        varDeclarationBtn.setGraphic(varDecImgView);
+        varDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
+        Button arrayDeclarationBtn = new Button("Array Variable\nDeclaration");
+        arrayDeclarationBtn.setTextAlignment(TextAlignment.CENTER);
+        arrayDeclarationBtn.setPrefSize(198, 50);
+        
+        ImageView arrVarDecImgView = new ImageView();
+        arrVarDecImgView.setPreserveRatio(true);
+        arrVarDecImgView.setFitHeight(30);
+        arrVarDecImgView.setImage(IoImg);
+        
+        arrayDeclarationBtn.setGraphic(arrVarDecImgView);
+        arrayDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
+        Button userInToVarBtn = new Button("User Input to\nVariable");
         userInToVarBtn.setPrefSize(198, 50);
+        userInToVarBtn.setTextAlignment(TextAlignment.CENTER);
+        
+        ImageView userIntoVarImgView = new ImageView();
+        userIntoVarImgView.setPreserveRatio(true);
+        userIntoVarImgView.setFitHeight(30);
+        userIntoVarImgView.setImage(IoImg);
+        
+        userInToVarBtn.setGraphic(userIntoVarImgView);
+        userInToVarBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
         Button outputBtn = new Button("Output");
         outputBtn.setPrefSize(198, 50);
+        
+        ImageView outputImgView = new ImageView();
+        outputImgView.setPreserveRatio(true);
+        outputImgView.setFitHeight(30);
+        outputImgView.setImage(IoImg);
+        
+        outputBtn.setGraphic(outputImgView);
+        outputBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
         Button varAssignmentBtn = new Button("Variable Assignment");
         varAssignmentBtn.setPrefSize(198, 50);
+        
+        imgFile = new File("images/ProcessImg.png");
+        Image processImg = new Image(imgFile.toURI().toString());
+        ImageView varAssignImgView = new ImageView();
+        varAssignImgView.setPreserveRatio(true);
+        varAssignImgView.setFitHeight(30);
+        varAssignImgView.setImage(processImg);
+        
+        varAssignmentBtn.setGraphic(varAssignImgView);
+        varAssignmentBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
         Button ifStmtBtn = new Button("If Statement");
         ifStmtBtn.setPrefSize(198, 50);
+        
+        imgFile = new File("images/DecisionImg.png");
+        Image decisionImg = new Image(imgFile.toURI().toString());
+        ImageView ifImgView = new ImageView();
+        ifImgView.setPreserveRatio(true);
+        ifImgView.setFitHeight(30);
+        ifImgView.setImage(decisionImg);
+        
+        ifStmtBtn.setGraphic(ifImgView);
+        ifStmtBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
         Button whileBtn = new Button("While Loop");
         whileBtn.setPrefSize(198, 50);
         
+        ImageView whileImgView = new ImageView();
+        whileImgView.setPreserveRatio(true);
+        whileImgView.setFitHeight(30);
+        whileImgView.setImage(decisionImg);
+        
+        whileBtn.setGraphic(whileImgView);
+        whileBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
+        Button forBtn = new Button("For Loop");
+        forBtn.setPrefSize(198, 50);
+        
+        ImageView forImgView = new ImageView();
+        forImgView.setPreserveRatio(true);
+        forImgView.setFitHeight(30);
+        forImgView.setImage(decisionImg);
+        
+        forBtn.setGraphic(forImgView);
+        forBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
+        Button functBtn = new Button("Invoke Function");
+        functBtn.setPrefSize(198, 50);
+        
+        imgFile = new File("images/InvokeImg.png");
+        Image invokeImg = new Image(imgFile.toURI().toString());
+        ImageView invokeImgView = new ImageView();
+        invokeImgView.setPreserveRatio(true);
+        invokeImgView.setFitHeight(30);
+        invokeImgView.setImage(invokeImg);
+        
+        functBtn.setGraphic(invokeImgView);
+        functBtn.setContentDisplay(ContentDisplay.RIGHT);
+        
         //add buttons to left sidebar
-        leftSidebarVb.getChildren().addAll(connectionBtn, varDeclarationBtn, userInToVarBtn, outputBtn, varAssignmentBtn, ifStmtBtn, whileBtn);
+        leftSidebarVb.getChildren().addAll(connectionBtn, varDeclarationBtn, arrayDeclarationBtn, userInToVarBtn, outputBtn, varAssignmentBtn, ifStmtBtn, whileBtn, forBtn, functBtn);
         
         //instantiate canvas scrollpane
         canvasSp = new ScrollPane();
@@ -469,7 +605,7 @@ public class FlowJava extends Application {
             
         });
         
-        //set event handler for new variable declaration button
+        
         ifStmtBtn.setOnAction((ActionEvent e) -> {
             resetCanvasSize();
             
@@ -570,7 +706,6 @@ public class FlowJava extends Application {
             
         });
         
-        //set event handler for new variable declaration button
         whileBtn.setOnAction((ActionEvent e) -> {
             resetCanvasSize();
             
@@ -640,36 +775,258 @@ public class FlowJava extends Application {
                 
                 //set edge event handler
                 newEdgeView.addEventHandler(MouseEvent.MOUSE_PRESSED, (MouseEvent mE) -> {
-                        //deselect if ctrl is down
-                        if (mE.isShortcutDown()) {
-                            if (mE.getSource().equals(selectedComponent)) {
-                                deselectComponent();
-                                return;
-                            }
+                    //deselect if ctrl is down
+                    if (mE.isShortcutDown()) {
+                        if (mE.getSource().equals(selectedComponent)) {
+                            deselectComponent();
+                            return;
                         }
-                        //deselect previous component
-                        deselectComponent();
-                        updateRSidebar(newEdgeView.getEdge());
-                    });
-                    //add edge to canvas
-                    mainZc.getChildren().add(newEdgeView);
-                    makingConnection = false;
-                    canvasSp.setCursor(Cursor.DEFAULT);
-                    connectionBtn.setStyle("");
-                    newEdgeView.toBack();
-                    newEdgeView.setX2(newEndWhile.getView().getTranslateX()+(newEndWhile.getView().getWidth()/2));
+                    }
                     //deselect previous component
                     deselectComponent();
-                    //select this component
-                    selectedComponent = newEdgeView;
-                    newEdgeView.select();
-                    
-                    newEdgeView.makeSubtle();
-                    newEdgeView.setIsDeletable(false);
+                    updateRSidebar(newEdgeView.getEdge());
+                });
+                //add edge to canvas
+                mainZc.getChildren().add(newEdgeView);
+                makingConnection = false;
+                canvasSp.setCursor(Cursor.DEFAULT);
+                connectionBtn.setStyle("");
+                newEdgeView.toBack();
+                newEdgeView.setX2(newEndWhile.getView().getTranslateX() + (newEndWhile.getView().getWidth() / 2));
+                //deselect previous component
+                deselectComponent();
+                //select this component
+                selectedComponent = newEdgeView;
+                newEdgeView.select();
+
+                newEdgeView.makeSubtle();
+                newEdgeView.setIsDeletable(false);
+            }
+
+        });
+        
+        forBtn.setOnAction((ActionEvent e) -> {
+            resetCanvasSize();
+            
+            //create parallelogram for vertex view background
+            Polygon forDiamond = new Polygon();
+            forDiamond.getPoints().addAll(0.0, 50.0, 100.0, 0.0, 
+                                         200.00, 50.0, 100.0, 100.0);
+            
+            Polygon endForRect = new Polygon();
+            endForRect.getPoints().addAll(0.0, 0.0, 75.0, 0.0, 
+                                         75.00, 35.0, 0.0, 35.0);
+            
+            //instantiate strings for different view styles
+            String forDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
+            String forSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            
+            
+            //instantiate Vertex model view and controller
+            Vertex newFor = new Vertex(new ForLoopController(), forDiamond, forDefStyle, forSelStyle, false);
+            ForLoopController newForController = (ForLoopController)newFor.getController();
+            newForController.setVertex(newFor);
+            
+            Vertex newEndFor = new Vertex(new EndForController(), endForRect, forDefStyle, forSelStyle);
+            EndForController newEndForController = (EndForController)newEndFor.getController();
+            newEndForController.setVertex(newEndFor);
+            
+            newForController.setEndFor(newEndForController);
+            newEndForController.setForCtrl(newForController);
+            
+            //open variable declaration fields input form dialog
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("For Loop", null, false, null);
+            
+            boolean isValid = (boolean)dialogResults[3];
+            
+            //only instantiate vertex if the values are not null
+            if(isValid){
+                
+                //set contoller values
+                newForController.setInitialExpr((String)dialogResults[0]);
+                newForController.setConditionExpr((String)dialogResults[1]);
+                newForController.setUpdateExpr((String)dialogResults[2]);
+                
+                //set up vertex
+                setUpNewVertex(newFor);
+                setUpNewVertex(newEndFor);
+                
+                //add vertex view to canvas
+                mainZc.getChildren().addAll(newEndFor.getView(),newFor.getView());
+                
+                //add vertex to flowchart
+                flowchart.addVertex(newFor);
+                flowchart.addVertex(newEndFor);
+                
+                //update vertex view label
+                String label = newForController.getVertexLabel();
+                if(label.length() > 18){
+                    label = label.substring(0, 18) + "...";
+                }
+                newFor.getView().updateLabel(label);
+                newEndFor.getView().updateLabel(newEndForController.getVertexLabel());
+                
+                newEndFor.getView().setTranslateY(newEndFor.getView().getTranslateY() + 200);
+                
+                Edge newEdge = flowchart.addEdge(newFor, newEndFor);
+                newEdge.getController().setEdge(newEdge);
+                EdgeView newEdgeView = newEdge.getView();
+                
+                //set edge event handler
+                newEdgeView.addEventHandler(MouseEvent.MOUSE_PRESSED, (MouseEvent mE) -> {
+                    //deselect if ctrl is down
+                    if (mE.isShortcutDown()) {
+                        if (mE.getSource().equals(selectedComponent)) {
+                            deselectComponent();
+                            return;
+                        }
+                    }
+                    //deselect previous component
+                    deselectComponent();
+                    updateRSidebar(newEdgeView.getEdge());
+                });
+                //add edge to canvas
+                mainZc.getChildren().add(newEdgeView);
+                makingConnection = false;
+                canvasSp.setCursor(Cursor.DEFAULT);
+                connectionBtn.setStyle("");
+                newEdgeView.toBack();
+                newEdgeView.setX2(newEndFor.getView().getTranslateX() + (newEndFor.getView().getWidth() / 2));
+                //deselect previous component
+                deselectComponent();
+                //select this component
+                selectedComponent = newEdgeView;
+                newEdgeView.select();
+
+                newEdgeView.makeSubtle();
+                newEdgeView.setIsDeletable(false);
+            }
+
+        });
+
+        functBtn.setOnAction(e -> {
+            
+            if (flowchart.getFunctions().isEmpty()){
+                showAlert(Alert.AlertType.WARNING, "Must create functions before you can invoke them!");
+                return;
+            }
+            
+            resetCanvasSize();
+            
+            //create parallelogram for vertex view background
+            Polygon barredRectangle = new Polygon();
+            barredRectangle.getPoints().addAll(0.0, 0.0, 
+                                         10.0, 0.0, 10.0, 70.0, 10.0, 0.0,
+                                         175.0, 0.0, 175.0, 70.0, 175.0, 0.0,
+                                         185.0, 0.0, 
+                                         185.00, 70.0, 0.0, 70.0);
+            
+            //instantiate strings for different view styles
+            String functDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
+            String functSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            
+            //instantiate Vertex model view and controller
+            Vertex newFunctInvoke = new Vertex(new FunctInvokeController(), barredRectangle, functDefStyle, functSelStyle);
+            FunctInvokeController newFunctInvokeController = (FunctInvokeController)newFunctInvoke.getController();
+            newFunctInvokeController.setVertex(newFunctInvoke);
+            
+            //open variable declaration fields input form dialog
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            
+            Object[] dialogResults = nVD.display("Invoke Function", flowchart.getVariables(), false, new Object[] {flowchart.getFunctions()});
+            
+            boolean isValid = (boolean)dialogResults[3];
+            
+            if(isValid){
+               //set contoller values
+                newFunctInvokeController.setFunctionName((String)dialogResults[0]);
+                newFunctInvokeController.setParameterVals((String)dialogResults[1]);
+                newFunctInvokeController.setVariableForValue((String)dialogResults[2]);
+                
+                //set up vertex
+                setUpNewVertex(newFunctInvoke);
+                
+                //add vertex view to canvas
+                mainZc.getChildren().addAll(newFunctInvoke.getView());
+                
+                //add vertex to flowchart
+                flowchart.addVertex(newFunctInvoke);
+                
+                //update vertex view label
+                String label = newFunctInvokeController.getVertexLabel();
+                if(label.length() > 16){
+                    label = label.substring(0, 17) + "...";
+                }
+                
+                newFunctInvoke.getView().updateLabel(label);
+                
             }
             
         });
         
+        arrayDeclarationBtn.setOnAction((ActionEvent e) -> {
+            resetCanvasSize();
+            
+            //create parallelogram for vertex view background
+            Polygon parallelogram = new Polygon();
+            parallelogram.getPoints().addAll(30.0, 0.0, 185.0, 0.0, 
+                                         155.00, 70.0, 0.0, 70.0);
+            
+            //instantiate strings for different view styles
+            String arrDecDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
+            String arrDecSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            
+            //instantiate Vertex model view and controller
+            Vertex newArrDeclaration = new Vertex(new ArrayDecController(), parallelogram, arrDecDefStyle, arrDecSelStyle);
+            ArrayDecController newArrDecController = (ArrayDecController)newArrDeclaration.getController();
+            newArrDecController.setVertex(newArrDeclaration);
+            
+            //open variable declaration fields input form dialog
+            CreateVertexDialog nVD = new CreateVertexDialog();
+            Object[] dialogResults = nVD.display("Array Declaration",flowchart.getVariables(), false, null);
+            boolean valuesNotNull = true;
+            int i = 0;
+            
+            //check if given values are null
+            while(valuesNotNull && i < dialogResults.length-1){
+                if(dialogResults[i] == null){
+                    valuesNotNull = false;
+                }
+                i++;
+            }
+            
+            //only instantiate vertex if the values are not null
+            if(valuesNotNull){
+                //set contoller values
+                newArrDecController.setType((VarType)dialogResults[0]);
+                newArrDecController.setName((String)dialogResults[1]);
+                newArrDecController.setValues((String)dialogResults[2]);
+                
+                //set up vertex
+                setUpNewVertex(newArrDeclaration);
+                
+                //add vertex view to canvas
+                mainZc.getChildren().addAll(newArrDeclaration.getView());
+                
+                //add vertex to flowchart
+                flowchart.addVertex(newArrDeclaration);
+                
+                //add variable to flowchart
+                Var newVar = flowchart.addVar(newArrDecController.getType(), newArrDecController.getName(), "");
+                newArrDecController.setVar(newVar);
+                        
+                //update vertex view label
+                String label = newArrDecController.getVertexLabel();
+                if(label.length() > 18){
+                    label = label.substring(0, 15) + "...";
+                }
+                newArrDeclaration.getView().updateLabel(label);
+                
+                showAlert(Alert.AlertType.INFORMATION, "array created, you can access or modify array elements in expressions using " 
+                            + newArrDecController.getName() + "[~element index~]");
+            }
+        });
         
         //set event handler for new connection button
         connectionBtn.setOnAction(e -> {
@@ -781,7 +1138,7 @@ public class FlowJava extends Application {
                     updateRSidebar();
                 }
                 
-            } else if (currentController instanceof WhileController){
+            } else if (currentController instanceof WhileController) {
                 WhileController currWhile = (WhileController)currentController;
                 Object[] dialogResults = nVD.display("While Loop", null, true, new Object[]{currWhile.getExpr(), currWhile.getExprHbx()});
                 boolean isValid = (boolean) dialogResults[2];
@@ -801,6 +1158,30 @@ public class FlowJava extends Application {
                     currWhile.getVertex().getView().updateLabel(label);
                     updateRSidebar();
                 }
+                
+            } else if (currentController instanceof ForLoopController) {
+                ForLoopController currFor = (ForLoopController)currentController;
+                Object[] dialogResults = nVD.display("For Loop", null, true, new Object[]{currFor.getInitialExpr(), currFor.getConditionExpr(), currFor.getUpdateExpr()});
+                boolean isValid = (boolean) dialogResults[3];
+
+                //only instantiate vertex if the values are not null
+                if (isValid) {
+
+                    //set contoller values
+                    currFor.setInitialExpr((String) dialogResults[0]);
+                    currFor.setConditionExpr((String) dialogResults[1]);
+                    currFor.setUpdateExpr((String) dialogResults[2]);
+
+                    //update vertex view label
+                    String label = currFor.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 18) + "...";
+                    }
+                    currFor.getVertex().getView().updateLabel(label);
+                    
+                    updateRSidebar();
+                }
+                
             } else if (currentController instanceof OutputController){
                 OutputController currOutput = (OutputController)currentController;
                 Object[] dialogResults = nVD.display("Output", null, true, new Object[]{currOutput.getValue(), currOutput.getExprHbx()});
@@ -883,7 +1264,7 @@ public class FlowJava extends Application {
 
                 }
             
-            }else if (currentController instanceof VarDecController){
+            } else if (currentController instanceof VarDecController){
                 VarDecController currVarDec = (VarDecController) currentController;
                 ArrayList<Var> currVars = flowchart.getVariables();
                 currVars.remove(currVarDec.getVar());
@@ -908,24 +1289,81 @@ public class FlowJava extends Application {
                     currVarDec.setValue((String) dialogResults[2]);
                     currVarDec.setExprHbx((ExpressionHBox) dialogResults[3]);
                     currVarDec.setUsingExpr((boolean) dialogResults[4]);
-
+                    
                     //update variable in flowchart
                     Var newVar = flowchart.addVar(currVarDec.getType(), currVarDec.getName(), "");
                     currVarDec.setVar(newVar);
-
+                    
                     //update vertex view label
                     String label = currVarDec.getVertexLabel();
                     if (label.length() > 18) {
                         label = label.substring(0, 15) + "...";
                     }
                     currVarDec.getVertex().getView().updateLabel(label);
+                    
+                }
+            } else if (currentController instanceof FunctInvokeController) {
+                FunctInvokeController currFI = (FunctInvokeController) currentController;
+                Object[] dialogResults = nVD.display("Invoke Function", flowchart.getVariables(), true, new Object[]{flowchart.getFunctions(), currFI.getFunctionName(), currFI.getParameterVals(), currFI.getVariableForValue()});
 
+                boolean isValid = (boolean) dialogResults[3];
+
+                if (isValid) {
+                    //set contoller values
+                    currFI.setFunctionName((String) dialogResults[0]);
+                    currFI.setParameterVals((String) dialogResults[1]);
+                    currFI.setVariableForValue((String) dialogResults[2]);
+
+                    //update vertex view label
+                    String label = currFI.getVertexLabel();
+                    if (label.length() > 16) {
+                        label = label.substring(0, 17) + "...";
+                    }
+
+                    currFI.getVertex().getView().updateLabel(label);
+
+                }
+            } else if (currentController instanceof ArrayDecController){
+                ArrayDecController currArrDec = (ArrayDecController) currentController;
+                ArrayList<Var> currVars = flowchart.getVariables();
+                currVars.remove(currArrDec.getVar());
+                Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues()});
+
+                boolean valuesNotNull = true;
+                int i = 0;
+
+                //check if given values are null
+                while (valuesNotNull && i < dialogResults.length - 1) {
+                    if (dialogResults[i] == null) {
+                        valuesNotNull = false;
+                    }
+                    i++;
+                }
+
+                //only instantiate vertex if the values are not null
+                if (valuesNotNull) {
+                    //set contoller values
+                    currArrDec.setType((VarType) dialogResults[0]);
+                    currArrDec.setName((String) dialogResults[1]);
+                    currArrDec.setValues((String) dialogResults[2]);
+                    
+                    //update variable in flowchart
+                    Var newVar = flowchart.addVar(currArrDec.getType(), currArrDec.getName(), "");
+                    currArrDec.setVar(newVar);
+                    
+                    //update vertex view label
+                    String label = currArrDec.getVertexLabel();
+                    if (label.length() > 18) {
+                        label = label.substring(0, 15) + "...";
+                    }
+                    currArrDec.getVertex().getView().updateLabel(label);
+                    
+                    showAlert(Alert.AlertType.INFORMATION, "array created, you can access or modify array elements in expressions using " 
+                            + currArrDec.getName() + "[~element index~]");
                 }
             }
             
-            
-                
-            
+            updateRSidebar(currentController.getVertex());
             
         });
         
@@ -962,6 +1400,7 @@ public class FlowJava extends Application {
         
         //add start and stop vertices to canvas
         mainZc.getChildren().addAll(stopVertex.getView(), startVertex.getView());
+
     }
 
     /**
@@ -1078,6 +1517,8 @@ public class FlowJava extends Application {
                         v.getView().setOpacity(1);
                     } else if(chosenParent.getController() instanceof WhileController) {
                         ((WhileController)chosenParent.getController()).setTrueEdge(newEdgeView);
+                    } else if (chosenParent.getController() instanceof ForLoopController) {
+                        ((ForLoopController)chosenParent.getController()).setTrueEdge(newEdgeView);
                     }
                     
                     newEdgeView.setX1(chosenParent.getController().getChildEdgeX(newEdgeView));
@@ -1223,6 +1664,32 @@ public class FlowJava extends Application {
                 removedEdges.add(c.getKey());
             });
             removedViews.add(whileV.getView());
+        } else if (vController instanceof ForLoopController) {
+            ArrayList<Vertex> removedVertices = new ArrayList<>();
+            removedVertices.add(v);
+            Vertex endForV = ((ForLoopController)vController).getEndFor().getVertex();
+            removedVertices.add(endForV);
+            flowchart.removeVertices(removedVertices);
+            endForV.getConnections().stream().map((c) -> {
+                removedViews.add(c.getKey().getView());
+                return c;
+            }).forEachOrdered((c) -> {
+                removedEdges.add(c.getKey());
+            });
+            removedViews.add(endForV.getView());
+        } else if (vController instanceof EndForController) {
+            ArrayList<Vertex> removedVertices = new ArrayList<>();
+            removedVertices.add(v);
+            Vertex forV = ((EndForController)vController).getForCtrl().getVertex();
+            removedVertices.add(forV);
+            flowchart.removeVertices(removedVertices);
+            forV.getConnections().stream().map((c) -> {
+                removedViews.add(c.getKey().getView());
+                return c;
+            }).forEachOrdered((c) -> {
+                removedEdges.add(c.getKey());
+            });
+            removedViews.add(forV.getView());
         } else {
             //remove the vertex from the flow chart
             flowchart.removeVertex(v);
@@ -1242,6 +1709,10 @@ public class FlowJava extends Application {
         if(v.getController() instanceof UserInToVarController) {
             UserInToVarController vInToVarController = (UserInToVarController) v.getController();
             flowchart.removeVar(vInToVarController.getVar());
+        }
+        if(v.getController() instanceof ArrayDecController){
+            ArrayDecController vArrDecController = (ArrayDecController) v.getController();
+            flowchart.removeVar(vArrDecController.getVar());
         }
         
         updateRSidebar();
@@ -1290,14 +1761,23 @@ public class FlowJava extends Application {
         } else if (v.getController() instanceof WhileController) { 
             rightSidebarVb.getChildren().addAll(new Text("While Loop"), new Text("\nMust be structured properly with \nEnd While - see manual"), 
                     new Text("\nEdit Vertex:"), editVertexBtn);
+        } else if (v.getController() instanceof FunctInvokeController) { 
+            rightSidebarVb.getChildren().addAll(new Text("Function Invoke"), new Text("\nUsed to explicitly invoke a \nfunction, however functions\ncan also be invoked in any \nexpression"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
+        } else if (v.getController() instanceof ArrayDecController) { 
+            rightSidebarVb.getChildren().addAll(new Text("Array Variable Declaration"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
+        } else if (v.getController() instanceof ForLoopController) { 
+            rightSidebarVb.getChildren().addAll(new Text("For Loop"), new Text("\nMust be structured properly with \nFor While - see manual"), 
+                    new Text("\nEdit Vertex:"), editVertexBtn);
         }
         
         rightSidebarVb.getChildren().addAll(new Text("\nVertex Description:"), vLblTxtArea);
         
-        if(v.getController() instanceof EndIfController || v.getController() instanceof EndWhileController){
+        if(v.getController() instanceof EndIfController || v.getController() instanceof EndWhileController || v.getController() instanceof EndForController){
             rightSidebarVb.getChildren().addAll(new Text("\nRequired Parents:"), new Text(Integer.toString(v.getController().getMaxParents() - 1)), 
                 new Text("\nRequired Children:"), new Text(v.getController().getMaxChildren().toString()));
-        } else if(v.getController() instanceof IfStmtController || v.getController() instanceof WhileController) {
+        } else if(v.getController() instanceof IfStmtController || v.getController() instanceof WhileController || v.getController() instanceof ForLoopController) {
             rightSidebarVb.getChildren().addAll(new Text("\nRequired Parents:"), new Text(v.getController().getMaxParents().toString()), 
                 new Text("\nRequired Children:"), new Text(Integer.toString(v.getController().getMaxChildren() - 1)));
         } else {
@@ -1341,7 +1821,6 @@ public class FlowJava extends Application {
     private void showAlert(Alert.AlertType alertType, String message){
         Alert customAlert = new Alert(alertType);
         customAlert.setContentText(message);
-        customAlert.show();
-        
+        customAlert.showAndWait();
     }
 }

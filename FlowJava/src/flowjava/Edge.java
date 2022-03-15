@@ -1,16 +1,18 @@
 
 package flowjava;
 
+import java.io.Serializable;
+
 /**
  * edge model for flowchart edges
  * 
  * @author cwood
  */
-public class Edge{
+public class Edge implements Serializable{
     //controller
     private final EdgeController controller;
     //view
-    private final EdgeView view;
+    private transient EdgeView view;
     
     public Edge(double x1, double y1, double x2, double y2, EdgeController controller){
         //assign controller and view
@@ -33,4 +35,11 @@ public class Edge{
     public EdgeView getView() {
         return view;
     }
+
+    public void setView(EdgeView view) {
+        this.view = view;
+    }
+    
+    
+    
 }

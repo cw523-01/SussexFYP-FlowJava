@@ -11,11 +11,11 @@ package flowjava;
  */
 public class IfStmtController extends VertexController{
     private String expr;
-    private ExpressionHBox exprHbx;
+    private transient ExpressionHBox exprHbx;
     private EndIfController endIf;
     
-    private EdgeView trueEdge;
-    private EdgeView falseEdge;
+    private transient EdgeView trueEdge;
+    private transient EdgeView falseEdge;
     
     
     public ExpressionHBox getExprHbx() {

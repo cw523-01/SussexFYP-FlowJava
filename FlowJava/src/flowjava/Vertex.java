@@ -5,6 +5,7 @@
  */
 package flowjava;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.scene.shape.Shape;
@@ -15,16 +16,16 @@ import javafx.util.Pair;
  *
  * @author cwood
  */
-public class Vertex{
+public class Vertex implements Serializable{
     private final VertexController controller;
-    private final VertexView view;
+    private transient VertexView view;
     //list of pairs for connected edges and whether this vertex is the parent
     private List<Pair<Edge,Boolean>> connections;
     
     public Vertex(VertexController controller, Shape backgroundShape, String defaultStyle, String selectedStyle){
         this.controller = controller;
         connections = new ArrayList<>();
-        view = new VertexView(this, backgroundShape,defaultStyle,selectedStyle);
+        view = new VertexView(this, backgroundShape, defaultStyle, selectedStyle);
     }
     
     public Vertex(VertexController controller, Shape backgroundShape, String defaultStyle, String selectedStyle, boolean isIfVertex){
@@ -111,6 +112,10 @@ public class Vertex{
             }
         }
         return parentVertices;
+    }
+
+    public void setView(VertexView view) {
+        this.view = view;
     }
     
 }

@@ -49,7 +49,7 @@ public class Terminal extends VertexController{
                     + "being in the main() method's \ncurly braces. Here we have\ncreated a class called\nmyClass with a "
                     + "main method \nto place our program in.";
         } else {
-            return "The end of a Java method or \nclass is implied by the closing \ncurly brace";
+            return "The end of a Java function or \nclass is implied by the closing \ncurly brace";
         }
     }
     

@@ -9,20 +9,20 @@ package flowjava;
  *
  * @author cwood
  */
-public class EndWhileController extends VertexController{
-    private WhileController whileCtrl;
+public class EndForController extends VertexController{
+    private ForLoopController forCtrl;
 
-    public WhileController getWhileCtrl() {
-        return whileCtrl;
+    public ForLoopController getForCtrl() {
+        return forCtrl;
     }
 
-    public void setWhileCtrl(WhileController whileCtrl) {
-        this.whileCtrl = whileCtrl;
+    public void setForCtrl(ForLoopController forCtrl) {
+        this.forCtrl = forCtrl;
     }
     
     @Override
     public String getVertexLabel() {
-        return "End While"; 
+        return "End For"; 
     }
     
     @Override
@@ -37,6 +37,7 @@ public class EndWhileController extends VertexController{
     
     @Override
     public String getJavaDescription() {
-        return "in java you do not explicitly\nstate an end while, an end\nwhile is implied by the closing\ncurly brace of a while loop";
+        return "in java you do not explicitly\nstate an end for, an end\nfor is implied by the closing\ncurly brace of a for loop";
     }
+    
 }

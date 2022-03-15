@@ -1,12 +1,14 @@
 
 package flowjava;
 
+import java.io.Serializable;
+
 /**
  * edge controller for flowchart edges
  *
  * @author cwood
  */
-public class EdgeController {
+public class EdgeController implements Serializable{
     
     //parent vertex
     final private Vertex parent;

@@ -1,6 +1,7 @@
 
 package flowjava;
 
+import java.io.Serializable;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
@@ -13,7 +14,7 @@ import javafx.scene.text.Text;
  */
 public class VertexView extends StackPane{
     //the vertex model of this view
-    private final Vertex vertex;
+    private Vertex vertex;
     //a label for this view
     private Text label;
     //the background shape of this view
@@ -69,8 +70,9 @@ public class VertexView extends StackPane{
     public Text getLabel() {
         return label;
     }
-    
-    
-    
+
+    public void setVertex(Vertex vertex) {
+        this.vertex = vertex;
+    }
     
 }

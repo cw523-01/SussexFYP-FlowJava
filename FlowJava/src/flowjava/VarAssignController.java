@@ -12,7 +12,7 @@ package flowjava;
 public class VarAssignController extends VertexController {
     private String varName;
     private String value;
-    private ExpressionHBox exprHbx;
+    private transient ExpressionHBox exprHbx;
     private boolean usingExpr;
     
     @Override

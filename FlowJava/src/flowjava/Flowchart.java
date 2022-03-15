@@ -1,6 +1,7 @@
 
 package flowjava;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import javafx.util.Pair;
 
@@ -10,7 +11,7 @@ import javafx.util.Pair;
  * 
  * @author cwood
  */
-public class Flowchart {
+public class Flowchart implements Serializable {
     //vertices of the flowchart
     private ArrayList<Vertex> vertices;
     //edges of the flowchart
@@ -20,11 +21,15 @@ public class Flowchart {
     
     private Vertex startVertex;
     
+    private ArrayList<FunctionFlowchart> functions;
+    
     public Flowchart(){
         //instantiate lists
         vertices = new ArrayList<>();
         edges = new ArrayList<>();
         variables = new ArrayList<>();
+        functions = new ArrayList<>();
+        
     }
     
     /**
@@ -217,6 +222,34 @@ public class Flowchart {
 
     public Vertex getStartVertex() {
         return startVertex;
+    }
+    
+    public void addFunction(FunctionFlowchart newFunction){
+        functions.add(newFunction);
+    }
+    
+    public Boolean removeFunction(FunctionFlowchart function){
+        return functions.remove(function);
+    }
+
+    public ArrayList<FunctionFlowchart> getFunctions() {
+        return functions;
+    }
+
+    public void setFunctions(ArrayList<FunctionFlowchart> functions) {
+        this.functions = functions;
+    }
+
+    public void setVertices(ArrayList<Vertex> vertices) {
+        this.vertices = vertices;
+    }
+
+    public void setEdges(ArrayList<Edge> edges) {
+        this.edges = edges;
+    }
+
+    public void setVariables(ArrayList<Var> variables) {
+        this.variables = variables;
     }
     
     

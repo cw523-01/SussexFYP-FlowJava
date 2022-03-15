@@ -9,8 +9,8 @@ package flowjava;
  *
  * @author cwood
  */
-public class OutputController extends VertexController{
-    
+public class ReturnController extends VertexController{
+
     private String value;
     private transient ExpressionHBox exprHbx;
     private boolean usingExpr;
@@ -32,11 +32,6 @@ public class OutputController extends VertexController{
     }
     
     @Override
-    public String getVertexLabel() {
-        return "Output: " + value; 
-    }
-    
-    @Override
     public Integer getMaxChildren() {
         return 1;
     }
@@ -46,16 +41,21 @@ public class OutputController extends VertexController{
         return 1;
     }
     
+    @Override
+    public String getJavaDescription() {
+        return ("return (" + value + ");");
+    }
+    
+    @Override
+    public String getVertexLabel() {
+        return "Return: " + value; 
+    }
+    
     public boolean isUsingExpr() {
         return usingExpr;
     }
 
     public void setUsingExpr(boolean usingExpr) {
         this.usingExpr = usingExpr;
-    }
-    
-    @Override
-    public String getJavaDescription() {
-        return "System.out.println(" + value + "); \n\nThere are many methods of \noutputting values in java, this \nis the most basic";
     }
 }

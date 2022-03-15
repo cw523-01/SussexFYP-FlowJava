@@ -1,6 +1,7 @@
 
 package flowjava;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Objects;
  *
  * @author cwood
  */
-public class Var {
+public class Var implements Serializable{
     //data type
     private final VarType type;
     //name
@@ -44,7 +45,15 @@ public class Var {
             return false;
         }
         Var v = (Var) o;
-        return type.equals(v.getType()) && name.equals(v.getName()) && value.equals(v.getValue());
+        if(value != null){
+            return type.equals(v.getType()) && name.equals(v.getName()) && value.equals(v.getValue());
+        } else {
+            if(v.getValue() == null){
+                return type.equals(v.getType()) && name.equals(v.getName());
+            } else {
+                return false;
+            }
+        }
     }
 
     @Override

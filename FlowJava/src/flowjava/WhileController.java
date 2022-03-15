@@ -11,7 +11,7 @@ package flowjava;
  */
 public class WhileController extends VertexController{
     private String expr;
-    private ExpressionHBox exprHbx;
+    private transient ExpressionHBox exprHbx;
     private EndWhileController endWhile;
     
     private EdgeView trueEdge;

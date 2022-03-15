@@ -1,6 +1,7 @@
 
 package flowjava;
 
+import java.io.Serializable;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ListChangeListener;
@@ -15,7 +16,7 @@ import javafx.scene.shape.Polyline;
  *
  * @author cwood
  */
-public class EdgeView  extends Group{
+public class EdgeView  extends Group {
     //the x coordinates for each end of the edge
     private SimpleDoubleProperty x1 = new SimpleDoubleProperty();
     private SimpleDoubleProperty x2 = new SimpleDoubleProperty();
@@ -35,7 +36,7 @@ public class EdgeView  extends Group{
     //the lendth of the arrow lineHead tips
     private final double ARROWHEAD_LENGTH = 10;
     //the edge that this edge view displays
-    private final Edge edge;
+    private Edge edge;
     
     private boolean isDeletable;
     
@@ -172,4 +173,10 @@ public class EdgeView  extends Group{
     public void setIsDeletable(boolean isDeletable) {
         this.isDeletable = isDeletable;
     }
+
+    public void setEdge(Edge edge) {
+        this.edge = edge;
+    }
+    
+    
 }
