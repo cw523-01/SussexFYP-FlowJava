@@ -1061,7 +1061,16 @@ public class ProgramRunner {
         return java + repeatString("\t",tabIndex-1) + "}\n";
     }
     
-     public void compileConverted(String className, String methodName, String classCode, Boolean run) throws UserCreatedExprException{ 
+    /**
+     * Compiles (and runs) a program that is stored in a class in a string
+     * 
+     * @param className the name of the class to compile
+     * @param methodName the name of the method to run in the class (can be empty)
+     * @param classCode the code of the class to compile
+     * @param run whether the specified method should run after the class is compiled
+     * @throws UserCreatedExprException thrown if an exception is encountered when compiling or running the class 
+     */
+    public void compileConverted(String className, String methodName, String classCode, Boolean run) throws UserCreatedExprException{ 
         //create a hash map to use as a class cache for the java compiler
         Map<String, ByteArrayOutputStream> classCache = new HashMap<>();
         //get a compiler using Java X tool provider
