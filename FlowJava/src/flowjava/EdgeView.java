@@ -37,9 +37,18 @@ public class EdgeView  extends Group {
     private final double ARROWHEAD_LENGTH = 10;
     //the edge that this edge view displays
     private Edge edge;
+    //whether the edge is removable by a user
+    private boolean removable;
     
-    private boolean isDeletable;
-    
+    /**
+     * constructor for objects of class EdgeView
+     * 
+     * @param x1 initial x coordinate for start of the main line
+     * @param y1 initial y coordinate for start of the main line
+     * @param x2 initial x coordinate for end of the main line
+     * @param y2 initial y coordinate for end of the main line
+     * @param edge edge model that this view is visualising
+     */
     public EdgeView(double x1, double y1, double x2, double y2, Edge edge){
         //assign the initial coordinates of the arrow
         this.x1.set(x1);
@@ -47,7 +56,7 @@ public class EdgeView  extends Group {
         this.x2.set(x2);
         this.y2.set(y2);
         
-        isDeletable = true;
+        removable = true;
         
         //assign edge
         this.edge = edge;
@@ -79,6 +88,9 @@ public class EdgeView  extends Group {
         update();
     }
     
+    /**
+     * 
+     */
     private void update() {
         //get new line coodinates using scale()
         double[] head = scale(x1.get(), y1.get(), x2.get(), y2.get());
@@ -95,11 +107,11 @@ public class EdgeView  extends Group {
 
         //update the arrow lineHead components
         double theta = Math.atan2(newY2-newY1, newX2-newX1);
-        //get the first points coordinates
+        //calculate and set the first coordinates of the arrow head
         double x = newX2 - Math.cos(theta + ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
         double y = newY2 - Math.sin(theta + ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
         this.lineHead.getPoints().setAll(x,y,newX2,newY2);
-        //get the second points coordinates
+        //calculate and set the last coordinates of the arrow head
         x = newX2 - Math.cos(theta - ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
         y = newY2 - Math.sin(theta - ARROWHEAD_ANGLE) * ARROWHEAD_LENGTH;
         this.lineHead.getPoints().addAll(x,y);
@@ -124,15 +136,38 @@ public class EdgeView  extends Group {
         };
     }
     
+    /**
+     * setter for x coordinate of the start of the main line
+     * 
+     * @param x1 x coordinate
+     */
     public void setX1(double x1) {
         this.x1.set(x1);
     }
+    
+    /**
+     * setter for y coordinate of the start of the main line
+     * 
+     * @param y1 y coordinate
+     */
     public void setY1(double y1) {
         this.y1.set(y1);
     }
+    
+    /**
+     * setter for x coordinate of the end of the main line
+     * 
+     * @param x2 x coordinate
+     */
     public void setX2(double x2) {
         this.x2.set(x2);
     }
+    
+    /**
+     * setter for y coordinate of the end of the main line
+     * 
+     * @param y2 y coordinate
+     */
     public void setY2(double y2) {
         this.y2.set(y2);
     }
@@ -156,24 +191,47 @@ public class EdgeView  extends Group {
         lineHead.setEffect(null);
     }
 
+    /**
+     * getter for the edge model of this view
+     * 
+     * @return edge model
+     */
     public Edge getEdge() {
         return edge;
     }
     
+    /**
+     *  add effects to the edges lines to show users that they can't delete it
+     */
     public void makeSubtle(){
         mainLine.getStrokeDashArray().addAll(5d, 5d, 5d, 5d);
         headVisible.set(false);
         mainLine.setOpacity(0.25);
     }
 
-    public boolean isDeletable() {
-        return isDeletable;
+    /**
+     * getter for if the edge is removable
+     * 
+     * @return boolean for if edge is removable
+     */
+    public boolean isRemovable() {
+        return removable;
     }
 
-    public void setIsDeletable(boolean isDeletable) {
-        this.isDeletable = isDeletable;
+    /**
+     * setter for if the edge is removable
+     * 
+     * @param removable new value for removable
+     */
+    public void setRemovable(boolean removable) {
+        this.removable = removable;
     }
 
+    /**
+     * setter for edge model 
+     * 
+     * @param edge new value for edge model
+     */
     public void setEdge(Edge edge) {
         this.edge = edge;
     }

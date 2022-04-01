@@ -17,6 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -24,34 +25,75 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
+ * Dialog used to help the users create Vertices for a program
  *
  * @author cwood
  */
 public class CreateVertexDialog {
+    //text fields for collecting values from users
     private TextField valueTxtFld, nameTxtFld, parametersTxtFld, initExprTxtFld, condExprTxtFld, updateExprTxtFld;
+    //expression HBox for building expressions
     private ExpressionHBox exprHbx;
+    //flag booleans for input form responses
     private boolean valid, usingExpr;
+    //descriptive texts for if and while input forms
     private Text ifText, whileText;
-    //data type
+    //data type for variable vertices
     private VarType type;
-    //variable name and value
+    //Strings returning user input
     private String name, val, expr, parseVarName, intExpr, condExpr, updateExpr;
+    //combo box for choosing a VarType
     private ComboBox<VarType> typeCmbx;
+    //HBox for organising form components
     private HBox valInputsHBox;
+    //combo box for choosing a type of value
     private ComboBox<String> valCmbx = new ComboBox<>();
-     private ComboBox<String> varCmbx = new ComboBox<>();
+    //combo box for choosing a variable
+    private ComboBox<String> varCmbx = new ComboBox<>();
+    //text to prompt user about a saved expression
     private Text exprSavedTxt;
+    //HBox for elements relating to expression entry
     private HBox createExprHbox;
+    //Button for using the CreateExprDialog 
     private Button createExprBtn;
+    //Button for confirming user input
     private Button confirmBtn;
+    //root node
     private VBox root;
+    //HBox for elements relating to user input confirmation
     private HBox confirmHBox;
+    //List of all variable names
     private ArrayList<String> varNames;
+    //object array for returning user input
     private Object[] results;
+    //the function chosen for a function invocation vertex
     private FunctionFlowchart chosenFunction;
     
+    /**
+     * gets user input for creating a new vertex of a specified type and returns the entered values,
+     * if the user is editing a vertex then vertex values are required and the updated values are returned.
+     * 
+     * the different supported vertex types and the values required for and edit are:
+     * 
+     * "If Statement" - boolean expression stored in String, ExpressionHBox (can be null).
+     * "While Loop" - boolean expression stored in String, ExpressionHBox (can be null).
+     * "For Loop" - initialisation expression stored in String, conditional expression stored in String, update expression stored in String.
+     * "Output" - expression stored in String, ExpressionHBox (can be null).
+     * "User Input to Variable" - VarType for variable type, String for variable name.
+     * "Variable Assignment" - String for variable name, String for assignment expression, ExpressionHBox (can be null).
+     * "Variable Declaration" - VarType for variable type, String for variable name, String for assignment expression, ExpressionHBox (can be null).
+     * "Invoke Function" - String for function name, String for parameter values, String for variable name to assign return value (can be null).
+     * "Recurse" - String for parameter values, String for variable name to assign return value (can be null).
+     * "Array Declaration" - VarType for array type, String for array name, String for assignment values.
+     * 
+     * @param newVertexType The type of vertex to get values for, supported types are "If Statement", "While Loop", "For Loop", "Output", "User Input to Variable", "Variable Assignment", "Variable Declaration", "Invoke Function", "Recurse", "Array Declaration" 
+     * @param variables The variables in the flowchart the vertex will be added to (only needed for some vertex types)
+     * @param isEdit Whether the dialog is being used to edit a vertex
+     * @param vertexVals Values of the vertex being edited if the dialog is being used to edit a vertex 
+     * @return Array of objects used for constructing a vertex based on user input
+     */
     public Object[] display(String newVertexType, ArrayList<Var> variables, Boolean isEdit, Object[] vertexVals) {
-        
+        //initialise fields with default values
         valid = false;
         expr = "";
         exprHbx = null;
@@ -63,34 +105,35 @@ public class CreateVertexDialog {
         type = null;
         name = "";
         confirmBtn = new Button("Confirm");
+        varNames = new ArrayList<>();
+        createExprHbox = new HBox();
+        valInputsHBox = new HBox();
+        valCmbx = new ComboBox<>();
+        exprSavedTxt = new Text("  :saved:  ");
+        exprSavedTxt.setVisible(false);
         
+        //set the defaukt scene size
         int sceneWidth = 400;
         int sceneHeight = 200;
         
         //instantiate the stage
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
+        stage.getIcons().add(new Image("file:images/LogoImg.png"));
         
-        varNames = new ArrayList<>();
-        
-        createExprHbox = new HBox();
-        valInputsHBox = new HBox();
-        valCmbx = new ComboBox<>();
-        
-        exprSavedTxt = new Text("  :saved:  ");
-        exprSavedTxt.setVisible(false);
         
         //instantiate create expression button
         createExprBtn = new Button("Create Expression");
         createExprBtn.setOnAction(e -> {
-            Object[] exprResult = CreateExprDialog.display(exprHbx);
+            //use CreateExprDialog to help user create an expression
+            CreateExprDialog cED = new CreateExprDialog();
+            Object[] exprResult = cED.display(exprHbx);
             if (((Boolean) exprResult[1])) {
                 exprHbx = (ExpressionHBox) exprResult[0];
                 exprSavedTxt.setVisible(true);
                 createExprBtn.setText("Edit Expression");
             }
         });
-        
         createExprHbox.setAlignment(Pos.CENTER);
         createExprHbox.getChildren().addAll(createExprBtn, exprSavedTxt);
         
@@ -127,6 +170,7 @@ public class CreateVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "please specify expression value!");
                     return;
                 }
+                //set expr based on input method
                 switch (valCmbx.getValue()) {
                     case "Manual Expression":
                         if (valueTxtFld.getText().isEmpty()) {
@@ -533,6 +577,7 @@ public class CreateVertexDialog {
             }
             
         } else if (newVertexType.equals("Invoke Function")) {
+            @SuppressWarnings("unchecked")
             ArrayList<FunctionFlowchart> functions = (ArrayList<FunctionFlowchart>)vertexVals[0];
             
             ArrayList<String> functionNames = new ArrayList<>();
@@ -745,6 +790,7 @@ public class CreateVertexDialog {
         stage.setScene(scene);
         stage.showAndWait();
         
+        //return certain values depending on on newVertexType
         switch (newVertexType){
             case "If Statement":
             case "While Loop":
@@ -780,7 +826,11 @@ public class CreateVertexDialog {
         return results;
     }
     
-    
+    /**
+     * given an alert type and message, display an alert using these parameters for the type and content text 
+     * @param alertType the alert type for the alert to display
+     * @param message the content text for the alert to display
+     */
     private void showAlert(Alert.AlertType alertType, String message){
         Alert customAlert = new Alert(alertType);
         customAlert.setContentText(message);

@@ -6,6 +6,7 @@
 package flowjava;
 
 /**
+ * A specialised FunctInvokeController for making a recursive invocation
  *
  * @author cwood
  */

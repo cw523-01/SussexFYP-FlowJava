@@ -17,21 +17,41 @@ import javafx.util.Pair;
  * @author cwood
  */
 public class Vertex implements Serializable{
+    //cotroller for vertex
     private final VertexController controller;
+    //view for vertex (must be transient as it is JavaFX object)
     private transient VertexView view;
     //list of pairs for connected edges and whether this vertex is the parent
     private List<Pair<Edge,Boolean>> connections;
     
+    /**
+     * constructor for objects of class vertex
+     * 
+     * @param controller controller for vertex model
+     * @param backgroundShape background JavaFX shape for vertex view
+     * @param defaultStyle default JavaFX style for vertex view
+     * @param selectedStyle JavaFX style for vertex view for when it is selected
+     */
     public Vertex(VertexController controller, Shape backgroundShape, String defaultStyle, String selectedStyle){
         this.controller = controller;
         connections = new ArrayList<>();
         view = new VertexView(this, backgroundShape, defaultStyle, selectedStyle);
     }
     
+    /**
+     * constructor for objects of class vertex
+     * 
+     * @param controller controller for vertex model
+     * @param backgroundShape background JavaFX shape for vertex view
+     * @param defaultStyle default JavaFX style for vertex view
+     * @param selectedStyle JavaFX style for vertex view for when it is selected
+     * @param isIfVertex whether the vertex controller is to be of class IfStmtController
+     */
     public Vertex(VertexController controller, Shape backgroundShape, String defaultStyle, String selectedStyle, boolean isIfVertex){
         if(isIfVertex){
             this.controller = controller;
             connections = new ArrayList<>();
+            //use IfVertexView instead of VertexView
             view = new IfVertexView(this, backgroundShape,defaultStyle,selectedStyle);
         } else {
             this.controller = controller;
@@ -47,7 +67,7 @@ public class Vertex implements Serializable{
      * @param isParent Boolean for if this vertex is the parent
      */
     public void addConnection(Edge connection, boolean isParent){
-        connections.add(new Pair(connection, isParent));
+        connections.add(new Pair<>(connection, isParent));
     }
     
     /**
@@ -72,14 +92,29 @@ public class Vertex implements Serializable{
         return connections.remove(p);
     }
 
+    /**
+     * getter for list of connections (edge plus whether vertex is the parent)
+     * 
+     * @return list of connections
+     */
     public List<Pair<Edge, Boolean>> getConnections() {
         return connections;
     }
 
+    /**
+     * getter for vertex controller
+     * 
+     * @return vertex controller
+     */
     public VertexController getController() {
         return controller;
     }
 
+    /**
+     * getter for vertex view
+     * 
+     * @return vertex view
+     */
     public VertexView getView() {
         return view;
     }
@@ -114,6 +149,11 @@ public class Vertex implements Serializable{
         return parentVertices;
     }
 
+    /**
+     * setter for vertex view
+     * 
+     * @param view new value for vertex view 
+     */
     public void setView(VertexView view) {
         this.view = view;
     }

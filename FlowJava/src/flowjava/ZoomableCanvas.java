@@ -8,7 +8,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 
 /**
- * A canvas that can be zoomed via scrolling
+ * A canvas that can be zoomed via a ScrollEvent
  *
  * @author cwood
  */
@@ -32,7 +32,8 @@ public class ZoomableCanvas extends Pane{
     
     /**
      * Set x/y scale
-     * @param scale
+     * 
+     * @param scale new value for x/y scale
      */
     public void setScale(double scale) {
         customScale.set(scale);
@@ -78,7 +79,14 @@ public class ZoomableCanvas extends Pane{
         }
     };
     
+    /**
+     * getter for on scroll event handler
+     * 
+     * @return on scroll event handler
+     */
     public EventHandler<ScrollEvent> getOnScrollEventHandler() {
         return onScrollEventHandler;
     }
+    
+    
 }

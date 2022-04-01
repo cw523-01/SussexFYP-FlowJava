@@ -6,29 +6,52 @@
 package flowjava;
 
 /**
+ * Vertex Controller for a return statement
  *
  * @author cwood
  */
 public class ReturnController extends VertexController{
-
-    private String value;
+    //return expression string
+    private String expr;
+    //output expression in an ExpressionHBox (must be transient as it is JavaFX object)
     private transient ExpressionHBox exprHbx;
-    private boolean usingExpr;
+    //whether the vertex uses the ExpressionHBox
+    private boolean usingExprHbx;
     
+    /**
+     * getter for output expression in an ExpressionHBox
+     * 
+     * @return return expression in an ExpressionHBox
+     */
     public ExpressionHBox getExprHbx() {
         return exprHbx;
     }
 
+    /**
+     * setter for output expression in an ExpressionHBox
+     * 
+     * @param exprHbx new expression for return statement in ExpressionHBox
+     */
     public void setExprHbx(ExpressionHBox exprHbx) {
         this.exprHbx = exprHbx;
     }
 
-    public String getValue() {
-        return value;
+    /**
+     * getter for return expression string
+     * 
+     * @return return expression string
+     */
+    public String getExpr() {
+        return expr;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    /**
+     * setter for return expression string
+     * 
+     * @param expr new value for return expression string
+     */
+    public void setExpr(String expr) {
+        this.expr = expr;
     }
     
     @Override
@@ -43,19 +66,29 @@ public class ReturnController extends VertexController{
     
     @Override
     public String getJavaDescription() {
-        return ("return (" + value + ");");
+        return ("return (" + expr + ");");
     }
     
     @Override
     public String getVertexLabel() {
-        return "Return: " + value; 
+        return "Return: " + expr; 
     }
     
-    public boolean isUsingExpr() {
-        return usingExpr;
+    /**
+     * getter for whether the vertex uses the ExpressionHBox
+     * 
+     * @return whether the vertex uses the ExpressionHBox
+     */
+    public boolean isUsingExprHbx() {
+        return usingExprHbx;
     }
 
-    public void setUsingExpr(boolean usingExpr) {
-        this.usingExpr = usingExpr;
+    /**
+     * setter for whether the vertex uses the ExpressionHBox
+     * 
+     * @param usingExprHbx new value for whether the vertex uses the ExpressionHBox
+     */
+    public void setUsingExprHbx(boolean usingExprHbx) {
+        this.usingExprHbx = usingExprHbx;
     }
 }

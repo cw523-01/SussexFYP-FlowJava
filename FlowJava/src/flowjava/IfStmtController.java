@@ -6,30 +6,54 @@
 package flowjava;
 
 /**
+ * Vertex Controller for asserting start of an if statement
  *
  * @author cwood
  */
 public class IfStmtController extends VertexController{
+    //conditional expression
     private String expr;
+    //ExpressionHBox for conditional expression (must be transient as it is JavaFX object)
     private transient ExpressionHBox exprHbx;
+    //correlatinf end if controller
     private EndIfController endIf;
-    
+    //the edge leading to the true branch
     private transient EdgeView trueEdge;
+    //the edge leading to the false branch
     private transient EdgeView falseEdge;
     
-    
+    /**
+     * getter for ExpressionHBox used for conditional expression
+     * 
+     * @return ExpressionHBox used for conditional expression
+     */
     public ExpressionHBox getExprHbx() {
         return exprHbx;
     }
 
+    /**
+     * getter for ExpressionHBox used for conditional expression
+     * 
+     * @param exprHbx new value for ExpressionHBox used for conditional expression
+     */
     public void setExprHbx(ExpressionHBox exprHbx) {
         this.exprHbx = exprHbx;
     }
 
+    /**
+     * getter for conditional expression
+     * 
+     * @return conditional expression
+     */
     public String getExpr() {
         return expr;
     }
 
+    /**
+     * setter for conditional expression
+     * 
+     * @param expr new value for conditional expression
+     */
     public void setExpr(String expr) {
         this.expr = expr;
     }
@@ -39,26 +63,56 @@ public class IfStmtController extends VertexController{
         return "If (" + expr + ")"; 
     }
 
+    /**
+     * getter for correlating end if controller
+     * 
+     * @return correlating end if controller
+     */
     public EndIfController getEndIf() {
         return endIf;
     }
 
+    /**
+     * setter for correlating end if controller
+     * 
+     * @param endIf new value for correlating end if controller
+     */
     public void setEndIf(EndIfController endIf) {
         this.endIf = endIf;
     }
 
+    /**
+     * getter for edge view leading to true branch
+     * 
+     * @return edge view leading to true branch
+     */
     public EdgeView getTrueEdge() {
         return trueEdge;
     }
 
+    /**
+     * setter for edge view leading to true branch
+     * 
+     * @param trueEdge new value for edge view leading to true branch
+     */
     public void setTrueEdge(EdgeView trueEdge) {
         this.trueEdge = trueEdge;
     }
 
+    /**
+     * getter for edge view leading to false branch
+     * 
+     * @return edge view leading to false branch
+     */
     public EdgeView getFalseEdge() {
         return falseEdge;
     }
 
+    /**
+     * setter for edge view leading to false branch
+     * 
+     * @param falseEdge new value for edge view leading to false branch
+     */
     public void setFalseEdge(EdgeView falseEdge) {
         this.falseEdge = falseEdge;
     }
@@ -76,6 +130,7 @@ public class IfStmtController extends VertexController{
     
     @Override
     public double getChildEdgeY(EdgeView eView) {
+        //get corrdinate based on the branch the edge should lead to
         if(eView.equals(trueEdge)){
             return (getVertex().getView().getTranslateY()+getVertex().getView().getHeight());
         } else if (eView.equals(falseEdge)) {

@@ -6,16 +6,28 @@
 package flowjava;
 
 /**
- *
+ * Vertex Controller for asserting the end of an if statement
+ * 
  * @author cwood
  */
 public class EndIfController extends VertexController{
+    //the correlating if statement to this end if
     private IfStmtController ifStmt;
 
+    /**
+     * getter for the if statement controller that correlates to this end if
+     * 
+     * @return if statement controller
+     */
     public IfStmtController getIfStmt() {
         return ifStmt;
     }
 
+    /**
+     * setter for the if statement controller that correlates to this end if
+     * 
+     * @param ifStmt new value for correlating if statement
+     */
     public void setIfStmt(IfStmtController ifStmt) {
         this.ifStmt = ifStmt;
     }

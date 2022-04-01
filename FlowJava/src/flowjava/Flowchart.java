@@ -18,11 +18,14 @@ public class Flowchart implements Serializable {
     private ArrayList<Edge> edges;
     //variables of the flowchart
     private ArrayList<Var> variables;
-    
+    //the starting vertex of the flowchart
     private Vertex startVertex;
-    
+    //the functions that are part of the flowcharts program
     private ArrayList<FunctionFlowchart> functions;
     
+    /**
+     * Constructor for objects of class Flowchart
+     */
     public Flowchart(){
         //instantiate lists
         vertices = new ArrayList<>();
@@ -103,12 +106,20 @@ public class Flowchart implements Serializable {
      * call removeEdges() with this vertices connections afterwards
      * 
      * @param v vertex to be removed
-     * @return 
+     * 
+     * @return true if vertex existed in the flowchart and was removed
      */
     public Boolean removeVertex(Vertex v){
+        
         return vertices.remove(v);
     }
     
+    /**
+     * given an array list of vertices, remove the vertices from the flowchart
+     * 
+     * @param vertices array list of vertices to remove
+     * @return true if vertices list has changed due to the call
+     */
     public Boolean removeVertices(ArrayList<Vertex> vertices){
         return vertices.removeAll(vertices);
     }
@@ -212,42 +223,92 @@ public class Flowchart implements Serializable {
         edges.removeAll(removedEdges);
     }
 
+    /**
+     * getter for array list of variables (Var objects) in the flowchart
+     * 
+     * @return variables in array list 
+     */
     public ArrayList<Var> getVariables() {
         return variables;
     }
 
+    /**
+     * setter for starting vertex of flowchart
+     * 
+     * @param startVertex new value for starting vertex
+     */
     public void setStartVertex(Vertex startVertex) {
         this.startVertex = startVertex;
     }
 
+    /**
+     * getter for starting vertex of flowchart
+     * 
+     * @return starting vertex 
+     */
     public Vertex getStartVertex() {
         return startVertex;
     }
     
+    /**
+     * adds a given function to the flowchart
+     * @param newFunction new function to add to flowchart
+     */
     public void addFunction(FunctionFlowchart newFunction){
         functions.add(newFunction);
     }
     
+    /**
+     * removes a given function from the flowchart
+     * 
+     * @param function function to remove
+     * @return true if function was part of the flowchart
+     */
     public Boolean removeFunction(FunctionFlowchart function){
         return functions.remove(function);
     }
 
+    /**
+     * getter for array list of functions in the flowchart
+     * 
+     * @return array list of functions 
+     */
     public ArrayList<FunctionFlowchart> getFunctions() {
         return functions;
     }
 
+    /**
+     * setter for array list of functions in the flowchart
+     * 
+     * @param functions new array list of functions
+     */
     public void setFunctions(ArrayList<FunctionFlowchart> functions) {
         this.functions = functions;
     }
 
+    /**
+     * setter for array list of vertices in the flowchart
+     * 
+     * @param vertices new array list of vertices 
+     */
     public void setVertices(ArrayList<Vertex> vertices) {
         this.vertices = vertices;
     }
 
+    /**
+     * setter for array list of edges in the flowchart
+     * 
+     * @param edges new array list of edges
+     */
     public void setEdges(ArrayList<Edge> edges) {
         this.edges = edges;
     }
 
+    /**
+     * setter for array list of variables in the flowchart
+     * 
+     * @param variables new array list of variables 
+     */
     public void setVariables(ArrayList<Var> variables) {
         this.variables = variables;
     }

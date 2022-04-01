@@ -6,24 +6,50 @@
 package flowjava;
 
 /**
+ * Vertex Controller for getting a users input and storing it in a variable
  *
  * @author cwood
  */
 public class UserInToVarController extends VertexController{
+    //type of variable to assign value to
     private VarType type;
+    //name of variable to assign value to
     private String name;
+    //variable object for storing values
     private Var var;
     
+    /**
+     * getter for type of variable to assign value to
+     * 
+     * @return variable to assign value to
+     */
     public VarType getType() {
         return type;
     }
+    
+    /**
+     * getter for name of variable to assign value to
+     * 
+     * @return name of variable to assign value to
+     */
     public String getName() {
         return name;
     }
     
+    /**
+     * setter for type of variable to assign value to
+     * 
+     * @param type new value for type of variable to assign value to
+     */
     public void setType(VarType type) {
         this.type = type;
     }
+    
+    /**
+     * setter for name of variable to assign value to
+     * 
+     * @param name new value for name of variable to assign value to
+     */
     public void setName(String name) {
         this.name = name;
     }
@@ -33,10 +59,20 @@ public class UserInToVarController extends VertexController{
         return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + " " + name + " = user input"; 
     }
 
+    /**
+     * setter for variable to store values
+     * 
+     * @param v new value for variable to store values
+     */
     public void setVar(Var v) {
         var = v;
     }
 
+    /**
+     * getter for variable to store values
+     * 
+     * @return variable to store values
+     */
     public Var getVar() {
         return var;
     }

@@ -6,16 +6,28 @@
 package flowjava;
 
 /**
+ * Vertex Controller for asserting the end of a for loop
  *
  * @author cwood
  */
 public class EndForController extends VertexController{
+    //the correlating for loop to this end for
     private ForLoopController forCtrl;
 
+    /**
+     * getter for the for loop controller that correlates to this end for
+     * 
+     * @return for loop controller
+     */
     public ForLoopController getForCtrl() {
         return forCtrl;
     }
 
+    /**
+     * setter for the for loop controller that correlates to this end for
+     * 
+     * @param forCtrl new value for correlating for loop controller
+     */
     public void setForCtrl(ForLoopController forCtrl) {
         this.forCtrl = forCtrl;
     }

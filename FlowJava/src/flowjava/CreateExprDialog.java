@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -21,22 +22,35 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
+ * Dialog used to help the users create expressions using an ExpressionHBox
  *
  * @author cwood
  */
 public class CreateExprDialog {
     
+    //expression HBox used to build and store the expression
     private static ExpressionHBox exprHbx = null;
+    //textual representation of the expression being built
     private static Text exprTxt;
-    private static Button confirmBtn;
-    private static Boolean validSubmit = false;
+    //button for confirming input 
+    private Button confirmBtn;
+    //wether the input is valid
+    private Boolean valid = false;
     
-    public static Object[] display(ExpressionHBox givenExprHbx) {
+    /**
+     * takes user input to create an expression using an ExpressionHBox, when provided with
+     * an ExpressionHBox the dialog is used to edit the expression
+     * 
+     * @param givenExprHbx existing ExpressionHBox to edit, null for new expressions 
+     * @return Object array containing the created ExpressionHbox and a boolean for whether it is valid
+     */
+    public Object[] display(ExpressionHBox givenExprHbx) {
         
         //instantiate the stage
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
         
+        //set the value for exprHbx
         if(givenExprHbx == null){
             exprHbx = new ExpressionHBox(false); 
         }
@@ -44,24 +58,27 @@ public class CreateExprDialog {
             exprHbx = givenExprHbx;
         }
         
+        //create scroll pane to hold exprHbx
         ScrollPane expressionSp = new ScrollPane();
         expressionSp.setContent(exprHbx);
         expressionSp.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        
         expressionSp.setPrefHeight(102);
         
+        //initialise exprTxt
         exprTxt = new Text("");
         
+        //setup confirm button
         confirmBtn = new Button("Confirm");
         confirmBtn.setOnAction(e ->{
+            //check validity of exprHbx
             if(exprHbx.isComplete()){
-               validSubmit = true;
+               valid = true;
                stage.close();
-            }
-            else{
-                Alert nullAlert = new Alert(Alert.AlertType.ERROR);
-                nullAlert.setContentText("Created Expression is Incomplete!");
-                nullAlert.show();
+            } else {
+                //alert user of invalidity
+                Alert incompleteAlert = new Alert(Alert.AlertType.ERROR);
+                incompleteAlert.setContentText("Created Expression is Incomplete!");
+                incompleteAlert.show();
             }
         });
         
@@ -70,18 +87,23 @@ public class CreateExprDialog {
         root.getChildren().addAll(expressionSp, exprTxt, confirmBtn);
         root.setPadding(new Insets(10, 50, 10, 50));
         
+        //update expression text incase exprHbx is being editted 
         updateExprText();
         
         //instantiate and show scene
         Scene scene = new Scene(root, 800, 200);          
         stage.setTitle("Create Expression");
         stage.setScene(scene);
+        stage.getIcons().add(new Image("file:images/LogoImg.png"));
         stage.showAndWait();
         
         //return null if confirm button not pressed
-        return new Object[]{exprHbx, validSubmit};
+        return new Object[]{exprHbx, valid};
     }
     
+    /**
+     * updates the Text used to display the current expression
+     */
     public static void updateExprText(){
         exprTxt.setText("Expression: " + exprHbx.getExprString());
     }

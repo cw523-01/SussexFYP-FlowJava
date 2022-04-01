@@ -41,7 +41,8 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 /**
- *
+ * Dialog used to create or edit functions
+ * 
  * @author cwood
  */
 public class CreateFunctionDialog {
@@ -51,9 +52,9 @@ public class CreateFunctionDialog {
     private Node selectedComponent = null;
     //vertex chosen as a parent for a new connection
     private Vertex chosenParent = null;
-    
+    //current function being built by the user
     private FunctionFlowchart fFlowchart;
-     //canvas that the flowchart is built on
+    //canvas that the flowchart is built on
     private ZoomableCanvas dialogZc;
     //event handlers for vertex views
     private VertexViewGestures vertexGestures;
@@ -63,57 +64,71 @@ public class CreateFunctionDialog {
     private ScrollPane canvasSp;
     //group for the canvas
     private Group canvasGroup;
-    
+    //VBox for the right sidebar of the UI 
     private VBox rightSidebarVb;
+    //default text for the right sidebar
     private Text defaultRSTxt;
-    
+    //button to open the create vertex dialog for editing a vertex
     private Button editVertexBtn;
-    
+    //button to save the function
     private Button saveBtn;
+    //button to cancel function creation/edit
     private Button cancelBtn;
-    
+    //HBox to display function parameters
     private HBox paramHBox;
-    
+    //stage for the dialog to display on
     private Stage stage = new Stage();
-    
+    //button for adding parameters to the function
     private Button addParamBtn;
-    
+    //text field for settting the functions name
     private TextField nameTxtFld = new TextField();
+    //combobox for choosing the function type
     private ComboBox<String> typeCmbx = new ComboBox<>();
+    //text feild for setting the return value
     private TextField returnTxtFld = new TextField();
-    
+    //dialog for creating parameters to add to the function
     private CreateParameterDialog cPD = new CreateParameterDialog();
-    
+    //HBox to hold header UI elemets
     private HBox headersHbx;
-    
+    //boolean for whether the function is valid
     private Boolean isValid;
     
-
+    /**
+     * displays a dialog used to create or edit a function and returns the created function as a functFlowchart
+     * 
+     * @param otherFunctions the other functions that part of the program this function is part of 
+     * @param functFlowchart function to edit with this dialog, null for creating a new function
+     * @return FunctionFlowchart that was created or edited or null if input was invalid
+     */
     public FunctionFlowchart display(ArrayList<FunctionFlowchart> otherFunctions, FunctionFlowchart functFlowchart) {
-        
+        //create a list of function names from other functions
         ArrayList<String> functionNames = new ArrayList<>();
         for(FunctionFlowchart fF: otherFunctions){
             functionNames.add(fF.getName());
         }
         
+        //set prompt texts for header input fields
         nameTxtFld.setPromptText("Function Name");
         typeCmbx.setPromptText("Function Type");
         returnTxtFld.setPromptText("Return Value/Expression");
         
         stage.initModality(Modality.APPLICATION_MODAL);
+        //initialise root
         VBox root = new VBox();
         
+        //set typeCmbx values
         for(VarType v: FXCollections.observableArrayList(VarType.values())){
             typeCmbx.getItems().add(v.toString());
         }
-        
         typeCmbx.getItems().add("VOID");
         
+        //create HBox to hold return value input form
         HBox returnHbx = new HBox();
         returnHbx.setSpacing(10);
         returnHbx.setAlignment(Pos.CENTER_LEFT);
         returnHbx.getChildren().addAll(new Text("Return: "), returnTxtFld);
         
+        //assemble header UI components
         headersHbx = new HBox();
         headersHbx.setPadding(new Insets(0,5,0,5));
         headersHbx.setSpacing(10);
@@ -124,6 +139,7 @@ public class CreateFunctionDialog {
         
         typeCmbx.setOnAction(e -> {
             returnHbx.getChildren().clear();
+            //if function type is void remove return value header input field
             switch (typeCmbx.getValue()) {
                 case "VOID":
                     break;
@@ -133,8 +149,8 @@ public class CreateFunctionDialog {
             }
         });
         
+        //initialise save and cancel buttons
         saveBtn = new Button("Save");
-        
         cancelBtn = new Button("Cancel");
         cancelBtn.setOnAction((ActionEvent e) -> {
             isValid = false;
@@ -142,6 +158,7 @@ public class CreateFunctionDialog {
             stage.close();
         });
         
+        //create footer HBox to hold save and cancel buttons
         HBox footersHbx = new HBox();
         footersHbx.setPadding(new Insets(0,5,0,5));
         footersHbx.setSpacing(10);
@@ -150,12 +167,14 @@ public class CreateFunctionDialog {
         footersHbx.setStyle("-fx-border-style: solid inside;"
         + "-fx-border-width: 2;" + "-fx-border-color: lightgrey;");
         
+        //initialise addParamBtn
         addParamBtn = new Button("Add\nParameter");
         addParamBtn.setTextAlignment(TextAlignment.CENTER);
         addParamBtn.setPrefSize(90, 75);
-        
         addParamBtn.setOnAction((ActionEvent e) -> {
+            //prompt user to create parameter
             Object[] results = cPD.display(fFlowchart.getVariables(), false, null, null);
+            //if parameter is valid, add it to function
             if(results != null){
                 Var param = new Var((VarType)results[0],(String)results[1],null);
                 if(fFlowchart.addParameter(param)){
@@ -165,13 +184,16 @@ public class CreateFunctionDialog {
             }
         });
         
+        //initialise paramHBox
         paramHBox = new HBox();
         paramHBox.getChildren().add(addParamBtn);
         paramHBox.setSpacing(5);
         
+        //create VBox to hold paramHBox with a Text label
         VBox paramVBox = new VBox();
         paramVBox.getChildren().addAll(new Text("Parameters:"), paramHBox);
         
+        //create scroll pane to hold parameter elements
         ScrollPane paramSp = new ScrollPane();
         paramSp.setContent(paramVBox);
         paramSp.setStyle("-fx-border-style: solid inside;"
@@ -209,6 +231,7 @@ public class CreateFunctionDialog {
         leftSidebarSp.setMaxWidth(200);
         VBox leftSidebarVb = new VBox();
         
+        //assemble UI elements
         HBox canvasHb = new HBox();
         leftSidebarSp.setContent(leftSidebarVb);
         canvasHb.getChildren().addAll(leftSidebarSp, canvasSp);
@@ -217,13 +240,16 @@ public class CreateFunctionDialog {
         paramContainerVb.getChildren().addAll(paramSp, canvasHb);
         mainControlsHb.getChildren().addAll(paramContainerVb, rightSidebarSp);
         root.getChildren().addAll(headersHbx, mainControlsHb, footersHbx);
+        
         //instantiate and show scene
-        Scene scene = new Scene(root, 400, 200);         
+        Scene scene = new Scene(root, 400, 200);
         stage.setMinWidth(1000);
         stage.setMinHeight(850);
         stage.setTitle("Function Editor");
         stage.setScene(scene);
+        stage.getIcons().add(new Image("file:images/LogoImg.png"));
         
+        //add event filter for zooming
         scene.addEventFilter(ScrollEvent.ANY, dialogZc.getOnScrollEventHandler());
         
         //set the key pressed event handler for the scene
@@ -238,7 +264,7 @@ public class CreateFunctionDialog {
                 }
                 //if an edge is selected, delete it
                 if(selectedComponent instanceof EdgeView){
-                    if(((EdgeView)selectedComponent).isDeletable()){
+                    if(((EdgeView)selectedComponent).isRemovable()){
                         EdgeView eView = (EdgeView)selectedComponent;
                         dialogZc.getChildren().remove(eView);
                         fFlowchart.removeEdge(eView.getEdge());
@@ -249,6 +275,7 @@ public class CreateFunctionDialog {
         });
         
         scene.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent e) -> {
+            //if up or w is pressed select the parent of the currently selected vertex/edge
             if(e.getCode() == KeyCode.UP || e.getCode() == KeyCode.W){
                 if(selectedComponent instanceof VertexView){
                     VertexView vView = (VertexView) selectedComponent;
@@ -268,6 +295,7 @@ public class CreateFunctionDialog {
                     selectVertex(eView.getEdge().getController().getParent());
                     e.consume();
                 }
+            //if down or s is pressed select the child of the currently selected vertex/edge
             } else if(e.getCode() == KeyCode.DOWN || e.getCode() == KeyCode.S){
                 if(selectedComponent instanceof VertexView){
                     VertexView vView = (VertexView) selectedComponent;
@@ -289,11 +317,13 @@ public class CreateFunctionDialog {
                 }
             }
         });
-         
+        
+        //set up edit button
         editVertexBtn = new Button("Edit");
         editVertexBtn.setOnAction(e -> {
             CreateVertexDialog nVD = new CreateVertexDialog();
             VertexController currentController = ((VertexView) selectedComponent).getVertex().getController();
+            //open create vertex dialog with the controller of selectedComponent then update based on input form response
             if (currentController instanceof IfStmtController) {
                 IfStmtController currIfStmt = (IfStmtController) currentController;
                 Object[] dialogResults = nVD.display("If Statement", null, true, new Object[]{currIfStmt.getExpr(), currIfStmt.getExprHbx()});
@@ -360,15 +390,15 @@ public class CreateFunctionDialog {
                 
             } else if (currentController instanceof OutputController) {
                 OutputController currOutput = (OutputController) currentController;
-                Object[] dialogResults = nVD.display("Output", null, true, new Object[]{currOutput.getValue(), currOutput.getExprHbx()});
+                Object[] dialogResults = nVD.display("Output", null, true, new Object[]{currOutput.getExpr(), currOutput.getExprHbx()});
                 boolean isValid = (boolean) dialogResults[2];
 
                 //only instantiate vertex if the values are not null
                 if (isValid) {
                     //set contoller values
-                    currOutput.setValue((String) dialogResults[0]);
+                    currOutput.setExpr((String) dialogResults[0]);
                     currOutput.setExprHbx((ExpressionHBox) dialogResults[1]);
-                    currOutput.setUsingExpr((boolean) dialogResults[3]);
+                    currOutput.setUsingExprHbx((boolean) dialogResults[3]);
 
                     //update vertex view label
                     String label = currOutput.getVertexLabel();
@@ -419,7 +449,7 @@ public class CreateFunctionDialog {
 
             } else if (currentController instanceof VarAssignController) {
                 VarAssignController currVarAssign = (VarAssignController) currentController;
-                Object[] dialogResults = nVD.display("Variable Assignment", null, true, new Object[]{currVarAssign.getVarName(), currVarAssign.getValue(), currVarAssign.getExprHbx()});
+                Object[] dialogResults = nVD.display("Variable Assignment", null, true, new Object[]{currVarAssign.getVarName(), currVarAssign.getExpr(), currVarAssign.getExprHbx()});
 
                 boolean isValid = (boolean) dialogResults[3];
 
@@ -427,9 +457,9 @@ public class CreateFunctionDialog {
                 if (isValid) {
                     //set contoller values
                     currVarAssign.setVarName((String) dialogResults[0]);
-                    currVarAssign.setValue((String) dialogResults[1]);
+                    currVarAssign.setExpr((String) dialogResults[1]);
                     currVarAssign.setExprHbx((ExpressionHBox) dialogResults[2]);
-                    currVarAssign.setUsingExpr((boolean) dialogResults[4]);
+                    currVarAssign.setUsingExprHbx((boolean) dialogResults[4]);
 
                     //update vertex view label
                     String label = currVarAssign.getVertexLabel();
@@ -444,7 +474,7 @@ public class CreateFunctionDialog {
                 VarDecController currVarDec = (VarDecController) currentController;
                 ArrayList<Var> currVars = fFlowchart.getVariables();
                 currVars.remove(currVarDec.getVar());
-                Object[] dialogResults = nVD.display("Variable Declaration", currVars, true, new Object[]{currVarDec.getType(), currVarDec.getName(), currVarDec.getValue(), currVarDec.getExprHbx()});
+                Object[] dialogResults = nVD.display("Variable Declaration", currVars, true, new Object[]{currVarDec.getType(), currVarDec.getName(), currVarDec.getExpr(), currVarDec.getExprHbx()});
 
                 boolean valuesNotNull = true;
                 int i = 0;
@@ -462,9 +492,9 @@ public class CreateFunctionDialog {
                     //set contoller values
                     currVarDec.setType((VarType) dialogResults[0]);
                     currVarDec.setName((String) dialogResults[1]);
-                    currVarDec.setValue((String) dialogResults[2]);
+                    currVarDec.setExpr((String) dialogResults[2]);
                     currVarDec.setExprHbx((ExpressionHBox) dialogResults[3]);
-                    currVarDec.setUsingExpr((boolean) dialogResults[4]);
+                    currVarDec.setUsingExprHbx((boolean) dialogResults[4]);
 
                     //update variable in flowchart
                     Var newVar = fFlowchart.addVar(currVarDec.getType(), currVarDec.getName(), "");
@@ -569,14 +599,13 @@ public class CreateFunctionDialog {
         connectionBtn = new Button("Connection");
         connectionBtn.setPrefSize(198, 50);
         
-        
+        //add icon for connections to connection button
         File imgFile = new File("images/ConnectionImg.png");
         Image connectionImg = new Image(imgFile.toURI().toString());
         ImageView connectionImgView = new ImageView();
         connectionImgView.setPreserveRatio(true);
         connectionImgView.setFitHeight(30);
         connectionImgView.setImage(connectionImg);
-        
         connectionBtn.setGraphic(connectionImgView);
         connectionBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -601,16 +630,17 @@ public class CreateFunctionDialog {
             }
         });
         
+        //instantiate new variable declaration button
         Button varDeclarationBtn = new Button("Variable Declaration");
         varDeclarationBtn.setPrefSize(198, 50);
         
+        //add icon for I/O to button
         imgFile = new File("images/IoImg.png");
         Image IoImg = new Image(imgFile.toURI().toString());
         ImageView varDecImgView = new ImageView();
         varDecImgView.setPreserveRatio(true);
         varDecImgView.setFitHeight(30);
         varDecImgView.setImage(IoImg);
-        
         varDeclarationBtn.setGraphic(varDecImgView);
         varDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -651,9 +681,9 @@ public class CreateFunctionDialog {
                 //set contoller values
                 newVarDecController.setType((VarType)dialogResults[0]);
                 newVarDecController.setName((String)dialogResults[1]);
-                newVarDecController.setValue((String)dialogResults[2]);
+                newVarDecController.setExpr((String)dialogResults[2]);
                 newVarDecController.setExprHbx((ExpressionHBox)dialogResults[3]);
-                newVarDecController.setUsingExpr((boolean)dialogResults[4]);
+                newVarDecController.setUsingExprHbx((boolean)dialogResults[4]);
                 
                 //set up vertex
                 setUpNewVertex(newVarDeclaration);
@@ -678,15 +708,16 @@ public class CreateFunctionDialog {
             }
         });
         
+        //instantiate new user input to variable button
         Button userInToVarBtn = new Button("User Input to\nVariable");
         userInToVarBtn.setPrefSize(198, 50);
         userInToVarBtn.setTextAlignment(TextAlignment.CENTER);
         
+        //add icon for I/O to button
         ImageView userIntoVarImgView = new ImageView();
         userIntoVarImgView.setPreserveRatio(true);
         userIntoVarImgView.setFitHeight(30);
         userIntoVarImgView.setImage(IoImg);
-        
         userInToVarBtn.setGraphic(userIntoVarImgView);
         userInToVarBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -753,14 +784,15 @@ public class CreateFunctionDialog {
             
         });
         
+        //instantiate new output button
         Button outputBtn = new Button("Output");
         outputBtn.setPrefSize(198, 50);
         
+        //add icon for I/O to button
         ImageView outputImgView = new ImageView();
         outputImgView.setPreserveRatio(true);
         outputImgView.setFitHeight(30);
         outputImgView.setImage(IoImg);
-        
         outputBtn.setGraphic(outputImgView);
         outputBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -791,9 +823,9 @@ public class CreateFunctionDialog {
             //only instantiate vertex if the values are not null
             if(isValid){
                 //set contoller values
-                newOutputController.setValue((String)dialogResults[0]);
+                newOutputController.setExpr((String)dialogResults[0]);
                 newOutputController.setExprHbx((ExpressionHBox)dialogResults[1]);
-                newOutputController.setUsingExpr((boolean)dialogResults[3]);
+                newOutputController.setUsingExprHbx((boolean)dialogResults[3]);
                 
                 //set up vertex
                 setUpNewVertex(newOutput);
@@ -814,16 +846,17 @@ public class CreateFunctionDialog {
             
         });
         
+        //instantiate new variable assignment button
         Button varAssignmentBtn = new Button("Variable Assignment");
         varAssignmentBtn.setPrefSize(198, 50);
         
+        //add icon for process to button
         imgFile = new File("images/ProcessImg.png");
         Image processImg = new Image(imgFile.toURI().toString());
         ImageView varAssignImgView = new ImageView();
         varAssignImgView.setPreserveRatio(true);
         varAssignImgView.setFitHeight(30);
         varAssignImgView.setImage(processImg);
-        
         varAssignmentBtn.setGraphic(varAssignImgView);
         varAssignmentBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -855,9 +888,9 @@ public class CreateFunctionDialog {
             if(isValid){
                 //set contoller values
                 newVarAssignController.setVarName((String)dialogResults[0]);
-                newVarAssignController.setValue((String)dialogResults[1]);
+                newVarAssignController.setExpr((String)dialogResults[1]);
                 newVarAssignController.setExprHbx((ExpressionHBox)dialogResults[2]);
-                newVarAssignController.setUsingExpr((boolean)dialogResults[4]);
+                newVarAssignController.setUsingExprHbx((boolean)dialogResults[4]);
                 
                 //set up vertex
                 setUpNewVertex(newVarAssign);
@@ -879,16 +912,17 @@ public class CreateFunctionDialog {
             
         });
         
+        //instantiate new if statement button
         Button ifStmtBtn = new Button("If Statement");
         ifStmtBtn.setPrefSize(198, 50);
         
+        //add icon for decision to button
         imgFile = new File("images/DecisionImg.png");
         Image decisionImg = new Image(imgFile.toURI().toString());
         ImageView ifImgView = new ImageView();
         ifImgView.setPreserveRatio(true);
         ifImgView.setFitHeight(30);
         ifImgView.setImage(decisionImg);
-        
         ifStmtBtn.setGraphic(ifImgView);
         ifStmtBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -986,20 +1020,21 @@ public class CreateFunctionDialog {
                     newEdgeView.select();
                     
                     newEdgeView.makeSubtle();
-                    newEdgeView.setIsDeletable(false);
+                    newEdgeView.setRemovable(false);
                     
             }
             
         });
         
+        //instantiate new while loop button
         Button whileBtn = new Button("While Loop");
         whileBtn.setPrefSize(198, 50);
         
+        //instantiate new while loop button
         ImageView whileImgView = new ImageView();
         whileImgView.setPreserveRatio(true);
         whileImgView.setFitHeight(30);
         whileImgView.setImage(decisionImg);
-        
         whileBtn.setGraphic(whileImgView);
         whileBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1098,22 +1133,23 @@ public class CreateFunctionDialog {
                 newEdgeView.select();
 
                 newEdgeView.makeSubtle();
-                newEdgeView.setIsDeletable(false);
+                newEdgeView.setRemovable(false);
             }
 
         });
         
+        //instantiate new function invocation button
         Button functBtn = new Button("Invoke Other\nFunction");
         functBtn.setPrefSize(198, 50);
         functBtn.setTextAlignment(TextAlignment.CENTER);
         
+        //add icon for invoke to button
         imgFile = new File("images/InvokeImg.png");
         Image invokeImg = new Image(imgFile.toURI().toString());
         ImageView invokeImgView = new ImageView();
         invokeImgView.setPreserveRatio(true);
         invokeImgView.setFitHeight(30);
         invokeImgView.setImage(invokeImg);
-        
         functBtn.setGraphic(invokeImgView);
         functBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1177,14 +1213,15 @@ public class CreateFunctionDialog {
             
         });
         
+        //instantiate new recurse button
         Button recurseBtn = new Button("Recurse");
         recurseBtn.setPrefSize(198, 50);
         
+        //add icon for invoke to button
         ImageView recurseImgView = new ImageView();
         recurseImgView.setPreserveRatio(true);
         recurseImgView.setFitHeight(30);
         recurseImgView.setImage(invokeImg);
-        
         recurseBtn.setGraphic(recurseImgView);
         recurseBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1243,15 +1280,16 @@ public class CreateFunctionDialog {
 
         });
         
+        //instantiate new array variable declaration button
         Button arrayDeclarationBtn = new Button("Array Variable\nDeclaration");
         arrayDeclarationBtn.setPrefSize(198, 50);
         arrayDeclarationBtn.setTextAlignment(TextAlignment.CENTER);
         
+        //add icon for I/O to button
         ImageView arrVarDecImgView = new ImageView();
         arrVarDecImgView.setPreserveRatio(true);
         arrVarDecImgView.setFitHeight(30);
         arrVarDecImgView.setImage(IoImg);
-        
         arrayDeclarationBtn.setGraphic(arrVarDecImgView);
         arrayDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1318,14 +1356,15 @@ public class CreateFunctionDialog {
             }
         });
         
+        //instantiate new for loop button
         Button forBtn = new Button("For Loop");
         forBtn.setPrefSize(198, 50);
         
+        //add icon for decision to button
         ImageView forImgView = new ImageView();
         forImgView.setPreserveRatio(true);
         forImgView.setFitHeight(30);
         forImgView.setImage(decisionImg);
-        
         forBtn.setGraphic(forImgView);
         forBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1424,7 +1463,7 @@ public class CreateFunctionDialog {
                 newEdgeView.select();
 
                 newEdgeView.makeSubtle();
-                newEdgeView.setIsDeletable(false);
+                newEdgeView.setRemovable(false);
             }
 
         });
@@ -1432,32 +1471,41 @@ public class CreateFunctionDialog {
         isValid = false;
         
         saveBtn.setOnAction(e -> {
+            //ensure function is given a type
             if(typeCmbx.getValue() == null){
                 showAlert(Alert.AlertType.ERROR, "Function type is empty");
                 return;
             }
+            //ensure function is given a unique name
             if(functionNames.contains(nameTxtFld.getText())){
                 showAlert(Alert.AlertType.ERROR, "Function name already used");
                 return;
             }
+            //ensure function is given a name
             if(nameTxtFld.getText().isEmpty()){
                 showAlert(Alert.AlertType.ERROR, "Function name is empty");
                 return;
             }
+            //ensure function is given a valid name
             if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                 showAlert(Alert.AlertType.ERROR, "Function name is invalid");
                 return;
             }
+            //ensure funciton is given a reuturn value if required
             if(!typeCmbx.getValue().equals("VOID") && returnTxtFld.getText().isEmpty()){
                 showAlert(Alert.AlertType.ERROR, "Return value is empty (use \"null\" or void type to return nothing)");
                 return;
-            } if(nameTxtFld.getText().equals("main") || nameTxtFld.getText().equals("run") || nameTxtFld.getText().equals("start") ){
+            }
+            //ensure function name is valid to FlowJava
+            if(nameTxtFld.getText().equals("main") || nameTxtFld.getText().equals("run") || nameTxtFld.getText().equals("start") ){
                 showAlert(Alert.AlertType.ERROR, "User created functions can't be named 'main' 'run' or 'start' in Flowjava");
                 return;
             }
             
+            //set function name
             fFlowchart.setName(nameTxtFld.getText());
             
+            //set function return type
             switch (typeCmbx.getValue()){
                 case "VOID":
                     fFlowchart.setReturnType(null);
@@ -1488,11 +1536,14 @@ public class CreateFunctionDialog {
                     break;
             }
             
+            //set function return value
             fFlowchart.setRetunVal(returnTxtFld.getText());
             
+            //validate program syntax
             ProgramRunner progRunner = new ProgramRunner();
             try {
                 if(progRunner.convertThenCompileProgram(fFlowchart, false, true, otherFunctions)){
+                    //close stage and return function if function syntax is valid
                     isValid = true;
                     showAlert(Alert.AlertType.INFORMATION, "Function successfully created, use \n'" + fFlowchart.getName() +"(~parameter values~)' to call the function in an expression or use a function invocation node");
                     stage.close();
@@ -1502,12 +1553,15 @@ public class CreateFunctionDialog {
             }
         });
         
+        //wether the function is new or being edited
         Boolean isNewFF = false;
         
+        //if function is new initiliase fFlowchart
         if(functFlowchart == null){
             fFlowchart = new FunctionFlowchart(null, null, new ArrayList<>());
             isNewFF = true;
         } else {
+            //set fFlowchart to given function
             fFlowchart = functFlowchart;
             nameTxtFld.setText(fFlowchart.getName());
             if(fFlowchart.getReturnType() == null){
@@ -1532,8 +1586,7 @@ public class CreateFunctionDialog {
             Ellipse startEllipse = new Ellipse(60.0f, 30.f);
             String startDefStyle = "-fx-fill: lightgreen; -fx-stroke: black; -fx-stroke-width: 2;";
             String startSelStyle = "-fx-fill: lightgreen; -fx-stroke: red; -fx-stroke-width: 2;";
-
-            Vertex startVertex = new Vertex(new Terminal(true), startEllipse, startDefStyle, startSelStyle);
+            Vertex startVertex = new Vertex(new Terminal(true, true), startEllipse, startDefStyle, startSelStyle);
             startVertex.getController().setVertex(startVertex);
             setUpNewVertex(startVertex);
             fFlowchart.addVertex(startVertex);
@@ -1546,7 +1599,7 @@ public class CreateFunctionDialog {
             Ellipse stopEllipse = new Ellipse(60.0f, 30.f);
             String stopDefStyle = "-fx-fill: pink; -fx-stroke: black; -fx-stroke-width: 2;";
             String stopSelStyle = "-fx-fill: pink; -fx-stroke: red; -fx-stroke-width: 2;";
-            Vertex stopVertex = new Vertex(new Terminal(false), stopEllipse, stopDefStyle, stopSelStyle);
+            Vertex stopVertex = new Vertex(new Terminal(false, true), stopEllipse, stopDefStyle, stopSelStyle);
             stopVertex.getController().setVertex(stopVertex);
             setUpNewVertex(stopVertex);
             fFlowchart.addVertex(stopVertex);
@@ -1557,6 +1610,7 @@ public class CreateFunctionDialog {
             //add start and stop vertices to canvas
             dialogZc.getChildren().addAll(startVertex.getView(), stopVertex.getView());
         } else {
+            //add exisitng edges to dialogZc
             for(Edge e: fFlowchart.getEdges()){
                 dialogZc.getChildren().add(e.getView());
                 e.getView().addEventHandler(MouseEvent.MOUSE_PRESSED, (MouseEvent mE) -> {
@@ -1576,6 +1630,7 @@ public class CreateFunctionDialog {
                 });
             }
             
+            //add exisitng vertices to dialogZc
             for(Vertex v: fFlowchart.getVertices()){
                 dialogZc.getChildren().add(v.getView());
                 setUpVertexViewHandlers(v);
@@ -1586,6 +1641,7 @@ public class CreateFunctionDialog {
         
         deselectComponent();
         
+        //return fFlowchart if it is valid else return null
         if(isValid){
             return fFlowchart;
         } else {
@@ -1594,13 +1650,18 @@ public class CreateFunctionDialog {
     }
     
     private void updateParamHBox(){
+        //reset paramHBox
         paramHBox.getChildren().clear();
+        //add all parameters to paramHBox
         for(Var p: fFlowchart.getParameters()){
+            //add details of each parameter in a VBox
             VBox parameterVBox = new VBox();
             Text pTypeTxt = new Text("Type: " + p.getType().toString());
             Text pNameTxt = new Text("Name: " + p.getName());
+            //add an edit button for each parameter
             Button editPBtn = new Button("Edit");
             editPBtn.setOnAction((ActionEvent e) -> {
+                //get parameter details from cPD and validate
                 Object[] results = cPD.display(fFlowchart.getParameters(), true, p.getType(), p.getName());
                 if (results != null) {
                     Var param = new Var((VarType) results[0], (String) results[1], null);
@@ -1611,12 +1672,15 @@ public class CreateFunctionDialog {
                 }
                 updateParamHBox();
             });
+            //add a delete button for each parameter
             Button deletePBtn = new Button("Delete");
             deletePBtn.setOnAction((ActionEvent e) -> {
+                //remove the parameter
                 fFlowchart.getParameters().remove(p);
                 fFlowchart.getVariables().remove(p);
                 updateParamHBox();
             });
+            //assemble UI elements
             HBox btnsHbx = new HBox();
             btnsHbx.getChildren().addAll(editPBtn, deletePBtn);
             parameterVBox.getChildren().addAll(pTypeTxt, pNameTxt, btnsHbx);
@@ -1625,6 +1689,11 @@ public class CreateFunctionDialog {
         paramHBox.getChildren().add(addParamBtn);
     }
     
+    /**
+     * given a Vertex v, give the view of v the required event filters and handlers and move it to the centre of the canvas  
+     * 
+     * @param v Vertex to set up
+     */
     private void setUpNewVertex(Vertex v){
         VertexView vView = v.getView();
         //set inital vertex view position
@@ -1638,6 +1707,11 @@ public class CreateFunctionDialog {
                 (canvasSp.getVvalue() / canvasSp.getVmax()) - (vView.getBoundsInLocal().getHeight()/2) + canvasSp.getViewportBounds().getHeight() / 2);
     }
     
+    /**
+     * given a Vertex v, give the view of v the required event filters and handlers
+     * 
+     * @param v Vertex to set up
+     */
     private void setUpVertexViewHandlers(Vertex v){
         VertexView vView = v.getView();
         //add event filters from vertexGestures
@@ -1685,8 +1759,10 @@ public class CreateFunctionDialog {
                     Boolean isTrueEdge = null;
                     Boolean isIfConnection = false;
                     if(chosenParent.getController() instanceof IfStmtController){
+                        //prompt user for which edge they want to add for the if statement vertex
                         IfEdgeDialog IED = new IfEdgeDialog();
                         isTrueEdge = IED.display();
+                        //if no repsonse from user
                         if(isTrueEdge == null){
                             makingConnection = false;
                             canvasSp.setCursor(Cursor.DEFAULT);
@@ -1695,7 +1771,8 @@ public class CreateFunctionDialog {
                             showAlert(Alert.AlertType.ERROR, "Add connection cancelled!");
                             v.getView().setOpacity(1);
                             return;
-                        } else if(isTrueEdge && ((IfStmtController)chosenParent.getController()).getTrueEdge() != null) {
+                        } //if user chose true edge and true edge is already set 
+                        else if(isTrueEdge && ((IfStmtController)chosenParent.getController()).getTrueEdge() != null) {
                             makingConnection = false;
                             canvasSp.setCursor(Cursor.DEFAULT);
                             connectionBtn.setStyle("");
@@ -1703,7 +1780,8 @@ public class CreateFunctionDialog {
                             showAlert(Alert.AlertType.ERROR, "True connection already set!");
                             v.getView().setOpacity(1);
                             return;
-                        } else if (!isTrueEdge && ((IfStmtController)chosenParent.getController()).getFalseEdge() != null) {
+                        } //if user chose false edge and false edge is already set
+                        else if (!isTrueEdge && ((IfStmtController)chosenParent.getController()).getFalseEdge() != null) {
                             makingConnection = false;
                             canvasSp.setCursor(Cursor.DEFAULT);
                             connectionBtn.setStyle("");
@@ -1715,6 +1793,7 @@ public class CreateFunctionDialog {
                             isIfConnection = true;
                         }
                     }
+                    //add edge to flowchart
                     Edge newEdge = fFlowchart.addEdge(chosenParent, v);
                     newEdge.getController().setEdge(newEdge);
                     EdgeView newEdgeView = newEdge.getView();
@@ -1740,6 +1819,7 @@ public class CreateFunctionDialog {
                     canvasSp.setCursor(Cursor.DEFAULT);
                     connectionBtn.setStyle("");
                     
+                    //if edge is for if statement, while loop or for loop then update the controllers
                     if(isIfConnection){
                         if(isTrueEdge){
                             ((IfStmtController)chosenParent.getController()).setTrueEdge(newEdgeView);
@@ -1753,6 +1833,7 @@ public class CreateFunctionDialog {
                         ((ForLoopController)chosenParent.getController()).setTrueEdge(newEdgeView);
                     }
                     
+                    //set edge view start position
                     newEdgeView.setX1(chosenParent.getController().getChildEdgeX(newEdgeView));
                     newEdgeView.setY1(chosenParent.getController().getChildEdgeY(newEdgeView));
                     newEdgeView.setX2(v.getController().getParentEdgeX(newEdgeView));
@@ -1767,6 +1848,7 @@ public class CreateFunctionDialog {
                     newEdgeView.select();
                     updateRSidebar(newEdgeView.getEdge());
                 } else {
+                    //cancel connection and show error to user
                     makingConnection = false;
                     canvasSp.setCursor(Cursor.DEFAULT);
                     connectionBtn.setStyle("");
@@ -1778,6 +1860,11 @@ public class CreateFunctionDialog {
         }
     }
     
+    /**
+     * given an alert type and message, display an alert using these parameters for the type and content text 
+     * @param alertType the alert type for the alert to display
+     * @param message the content text for the alert to display
+     */
     private void showAlert(Alert.AlertType alertType, String message){
         Alert customAlert = new Alert(alertType);
         customAlert.setContentText(message);
@@ -1809,13 +1896,23 @@ public class CreateFunctionDialog {
         
     }
     
+    /**
+     * update the right sidebar to show the details of a given vertex v
+     * 
+     * @param v the vertex for to describe on the right side bar
+     */
     private void updateRSidebar(Vertex v){
+        //clear the right sidebar
         rightSidebarVb.getChildren().clear();
+        
+        //create a label for the vertex in a text area
         TextArea vLblTxtArea = new TextArea(v.getController().getVertexLabel());
         vLblTxtArea.setPrefSize(225, 50);
         vLblTxtArea.setEditable(false);
+        
         rightSidebarVb.getChildren().add(new Text("Vertex Type:"));
         
+        //add vertex information to right sidebar using the controller
         if(v.getController() instanceof EndIfController){
             rightSidebarVb.getChildren().addAll(new Text("End If"), new Text("\nMust be structured properly with \nIf Statement - see manual"));
         } else if (v.getController() instanceof EndWhileController) { 
@@ -1847,8 +1944,10 @@ public class CreateFunctionDialog {
                     new Text("\nEdit Vertex:"), editVertexBtn);
         }
         
+        //add the vertex label to the right sidebar
         rightSidebarVb.getChildren().addAll(new Text("\nVertex Description:"), vLblTxtArea);
         
+        //add information on child/parent requirements to right sidebar
         if(v.getController() instanceof EndIfController || v.getController() instanceof EndWhileController || v.getController() instanceof EndForController){
             rightSidebarVb.getChildren().addAll(new Text("\nRequired Parents:"), new Text(Integer.toString(v.getController().getMaxParents() - 1)), 
                 new Text("\nRequired Children:"), new Text(v.getController().getMaxChildren().toString()));
@@ -1859,6 +1958,8 @@ public class CreateFunctionDialog {
             rightSidebarVb.getChildren().addAll(new Text("\nRequired Parents:"), new Text(v.getController().getMaxParents().toString()), 
                 new Text("\nRequired Children:"), new Text(v.getController().getMaxChildren().toString()));
         }
+        
+        //create and add a text area for the java equilavent of the vertex to the right sidebar
         TextArea javaDescTxtArea = new TextArea(v.getController().getJavaDescription());
         javaDescTxtArea.setPrefWidth(225);
         javaDescTxtArea.setPrefHeight((new Text(javaDescTxtArea.getText())).getLayoutBounds().getHeight() + 30);
@@ -1867,16 +1968,24 @@ public class CreateFunctionDialog {
         
     }
     
+    /**
+     * update the right sidebar to show only the default text
+     */
     private void updateRSidebar(){
         rightSidebarVb.getChildren().clear();
         rightSidebarVb.getChildren().add(defaultRSTxt);
     }
     
+    /**
+     * update the right sidebar to show the details of a given edge e
+     * 
+     * @param e the edge for to describe on the right side bar
+     */
     private void updateRSidebar(Edge e){
         rightSidebarVb.getChildren().clear();
         rightSidebarVb.getChildren().add(new Text("Connection"));
         
-        if(!e.getView().isDeletable()){
+        if(!e.getView().isRemovable()){
             rightSidebarVb.getChildren().add(new Text("\nNot deletable: shows a relationship \nbetween two nodes"));
         }
         

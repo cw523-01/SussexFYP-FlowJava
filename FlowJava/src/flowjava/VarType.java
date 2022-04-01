@@ -1,7 +1,7 @@
 package flowjava;
 
 /**
- * enumerator for valid variable types in a flowchart
+ * Enumerator for valid data types in a flowchart
  *
  * @author cwood
  */

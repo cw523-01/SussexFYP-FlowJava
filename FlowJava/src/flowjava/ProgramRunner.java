@@ -35,200 +35,53 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
 import java.lang.NumberFormatException;
+import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.stage.Modality;
 
 
 /**
+ * Used to convert flowcharts to Java programs then compile and/or run them
  *
  * @author cwood
  */
 public class ProgramRunner {
-    //hash map to hold variables and their contexts during run
-    private HashMap<Var, Integer> variableContexts;
-    //int for context
-    private int currentContext;
+    //List of strings to hold output by System.err during user program run
     private ArrayList<String> errorStrings;
-    private Stack<String> outputStrings;
     //print stream to divert errors caused by users
     private PrintStream userErrPrintStream;
-    //print stream to divert output intended for users
-    private PrintStream flowJavaOutPrintStream;
     //dialog to display user caused errors
     private UserErrReportDialog userErrReportDialog;
-    
+    //a stack to keep track of while loops for flowchart structure validation
     private Stack<WhileController> whileStack;
-    
+    //a stack to keep track of for loops for flowchart structure validation
+    private Stack<ForLoopController> forStack;
+    //how many tabs should be inserted before each line of code during code conversion
     private int tabIndex;
+    //unknown class for user created programs, run using reflection
+    private Class<?> clarse;
+    //standarf java file manager for the compiler used to compile user created programs
+    private StandardJavaFileManager sfm;
+    //semaphore for controlling thread execution order
+    private Semaphore semaphore = new Semaphore(0);
     
     /**
-     * given a Flowchart fc, runs the program represented by fc
+     * Given a Flowchart fc, converts the program to java then compiles the program,
+     * what the method does with the compiled program is determined by the forRun and forSyntaxCheck parameters, 
+     * both of which should not be true for any given invocation
      * 
-     * @param fc the flow chart representing a program to run
+     * @param fc flowchart that represents the desired java program
+     * @param forRun whether the program should be run
+     * @param forSyntaxCheck whether the program should not run but it's syntax be checked
+     * @param functions the functions that should also be converted and compiled
+     * 
+     * @return returns true if the program is structurally, syntactically and semantically correct at compile time and at runtime if the program is also run
+     * @throws UserCreatedExprException thrown when there is an error when attempting to compile/run a user created program 
      */
-    public void runProgram(Flowchart fc){
-        //initialise error dialog
-        userErrReportDialog = new UserErrReportDialog();
-        //initialise variable map
-        variableContexts = new HashMap<>();
-        currentContext = 0;
-        
-        //initialise specialised input and output streams
-        userErrPrintStream = new PrintStream(new OutputStream() {
-                private StringBuilder line = new StringBuilder();
-                @Override
-                public void write(int b) throws IOException {
-                    if (b == '\n') {
-                        String s = line.toString();
-                        line.setLength(0);
-                        errorStrings.add(s);
-                    } else if (b != '\r') {
-                        line.append((char) b);
-                    }
-                }
-        });
-        
-        flowJavaOutPrintStream = new PrintStream(new OutputStream() {
-                private StringBuilder line = new StringBuilder();
-                @Override
-                public void write(int b) throws IOException {
-                    if (b == '\n') {
-                        String s = line.toString();
-                        line.setLength(0);
-                        outputStrings.push(s);
-                    } else if (b != '\r') {
-                        line.append((char) b);
-                    }
-                }
-        });
-                
-        //validate the structure of the given program
-        if(!validateStructure(fc)){
-            showAlert(Alert.AlertType.ERROR, "Invalid Program Structure");
-            return;
-        }
-        
-        //stack to hold the vertices that need to be run
-        Stack<VertexController> controllerStack = new Stack<>();
-        //the controller of the flowchart node currently being run, initialise as start node
-        VertexController currentController = fc.getStartVertex().getController();
-        //push start node onto stack
-        controllerStack.push(currentController);
-        
-        //while there are still nodes that need to run
-        while(!controllerStack.isEmpty()) {
-            //get next node that needs to run
-            currentController = controllerStack.pop();
-            //execute based on the class of the controller
-            if (currentController instanceof Terminal){
-                if(((Terminal)currentController).getIsStart()){
-                    //just push child nodes controller
-                    controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
-                    System.out.println("------------------");
-                    System.out.println("start.");
-                } else {
-                    //do nothing
-                    System.out.println("finish.");
-                    System.out.println("------------------");}
-            } else if(currentController instanceof UserInToVarController){
-                System.out.println("run UserInToVar.");
-                //attempt to execute node
-                if(runUserInToVar((UserInToVarController)currentController)){
-                    //push child nodes controller
-                    controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
-                } else {
-                    //exit erroneously
-                    System.out.println("terminanted erroneously.");
-                    System.out.println("------------------");
-                    showAlert(Alert.AlertType.ERROR, "Run Failed");
-                    return;
-                }
-            } else if(currentController instanceof VarDecController){
-                System.out.println("run VarDec.");
-                //attempt to execute node
-                if(runVarDec((VarDecController)currentController)){
-                    controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
-                } else {
-                    //exit erroneously
-                    System.out.println("terminanted erroneously.");
-                    System.out.println("------------------");
-                    showAlert(Alert.AlertType.ERROR, "Run Failed");
-                    return;
-                }
-            } else if(currentController instanceof OutputController){
-                System.out.println("run Ouput.");
-                //attempt to execute node
-                if(runOutput((OutputController)currentController)){
-                    controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
-                } else {
-                    //exit erroneously
-                    System.out.println("terminanted erroneously.");
-                    System.out.println("------------------");
-                    showAlert(Alert.AlertType.ERROR, "Run Failed");
-                    return;
-                }
-            } else if(currentController instanceof VarAssignController){
-                System.out.println("run VarAssign.");
-                //attempt to execute node
-                if(runVarAssign((VarAssignController)currentController)){
-                    controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
-                } else {
-                    //exit erroneously
-                    System.out.println("terminanted erroneously.");
-                    System.out.println("------------------");
-                    showAlert(Alert.AlertType.ERROR, "Run Failed");
-                    return;
-                }
-            } else if(currentController instanceof IfStmtController){
-                System.out.println("run IfStmt.");
-                //attempt to execute node
-                currentContext++;
-                VertexController nextContr = runIfStmt((IfStmtController)currentController);
-                if(nextContr != null){
-                    controllerStack.push(nextContr);
-                } else {
-                    //exit erroneously
-                    System.out.println("terminanted erroneously.");
-                    System.out.println("------------------");
-                    showAlert(Alert.AlertType.ERROR, "Run Failed");
-                    return;
-                }
-            } else if(currentController instanceof EndIfController){
-                //remove(currentContext) would only remove the first variable within the current context
-                variableContexts.values().removeAll(Collections.singleton(currentContext));
-                currentContext--;
-                //push child nodes controller
-                controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
-            
-            } else if(currentController instanceof WhileController){
-                System.out.println("run While.");
-                //attempt to execute node
-                currentContext++;
-                VertexController nextContr = runWhile((WhileController)currentController);
-                
-                if(nextContr != null){
-                    controllerStack.push(nextContr);
-                    if(nextContr == ((WhileController)currentController).getEndWhile().getVertex().getChildVertices().get(0).getController()){
-                        //remove(currentContext) would only remove the first variable within the current context
-                        variableContexts.values().removeAll(Collections.singleton(currentContext));
-                        currentContext--;
-                    }
-                } else {
-                    //exit erroneously
-                    System.out.println("terminanted erroneously.");
-                    System.out.println("------------------");
-                    showAlert(Alert.AlertType.ERROR, "Run Failed");
-                    return;
-                }
-            } else if(currentController instanceof EndWhileController){
-                //push child nodes controller
-                controllerStack.push(((EndWhileController)currentController).getWhileCtrl());
-            }
-            
-        }
-        
-        showAlert(Alert.AlertType.INFORMATION, "Program Run Complete");
-    }
-    
-    public Boolean convertThenCompileProgram(Flowchart fc, Boolean forRun, Boolean forSyntaxCheck, ArrayList<FunctionFlowchart> functions) throws UserCreatedExprException{ 
+    public Boolean convertThenCompileProgram(Flowchart fc, Boolean forRun, Boolean forSyntaxCheck, ArrayList<FunctionFlowchart> functions) throws UserCreatedExprException{
+        //initialise semaphore
+        semaphore = new Semaphore(0);
         //initialise error dialog
         userErrReportDialog = new UserErrReportDialog();
         
@@ -247,96 +100,64 @@ public class ProgramRunner {
                 }
         });
         
+        //ensure the programs structure is valid
         if(!validateStructure(fc)){
             showAlert(Alert.AlertType.ERROR, "Program structure invalid!");
             return false;
         }
+        //convert the program to a String representation of a java class
         String classCode = convertToJava(fc, "FlowJavaUserClass", forRun, forSyntaxCheck, functions);
+        
         //change the System.err to capture any user created errors
         PrintStream originalSysErr = System.err;
         errorStrings = new ArrayList<>();
         System.setErr(userErrPrintStream);
-        //evaluate the expression
-            try{
-                compileConverted("FlowJavaUserClass", "run", classCode, forRun);
-            } catch (UserCreatedExprException | RuntimeException e){
-                if(e instanceof RuntimeException){
-                    errorStrings.add(e.getMessage());
-                    for(StackTraceElement ste :e.getStackTrace()){
-                            errorStrings.add(ste.toString());
-                    }
-                    Throwable cause = e.getCause();
-                    while(cause != null){
-                        if(cause instanceof NumberFormatException){
-                            errorStrings.clear();
-                            NumberFormatException ne = (NumberFormatException)cause;
-                            errorStrings.add(ne.getMessage());
-                            for(StackTraceElement ste :cause.getStackTrace()){
-                                errorStrings.add(ste.toString());
-                            }
-                            break;
-                        }
-                        for(StackTraceElement ste :cause.getStackTrace()){
+        //compile (and run if forRun) the program 
+        try {
+            compileConverted("FlowJavaUserClass", "run", classCode, forRun);
+        } catch (UserCreatedExprException | RuntimeException e) {
+            //if error is encounterd during user run then display the errors to the user using user error report dialog
+            if (e instanceof RuntimeException) {
+                errorStrings.add(e.getMessage());
+                for (StackTraceElement ste : e.getStackTrace()) {
+                    errorStrings.add(ste.toString());
+                }
+                //iterate and all all causes
+                Throwable cause = e.getCause();
+                while (cause != null) {
+                    //number format exceptions are common due to user input so remove errors caused by them when they are part of the stack trace
+                    if (cause instanceof NumberFormatException) {
+                        errorStrings.clear();
+                        NumberFormatException ne = (NumberFormatException) cause;
+                        errorStrings.add(ne.getMessage());
+                        for (StackTraceElement ste : cause.getStackTrace()) {
                             errorStrings.add(ste.toString());
                         }
-                        cause = cause.getCause();
+                        break;
                     }
-                    userErrReportDialog.display(errorStrings);
-                } else {
-                    userErrReportDialog.display(errorStrings);
+                    for (StackTraceElement ste : cause.getStackTrace()) {
+                        errorStrings.add(ste.toString());
+                    }
+                    cause = cause.getCause();
                 }
-                if(forRun){
-                    showAlert(Alert.AlertType.ERROR, "Run Terminated Erroneously");
-                }
-                return false;
-            } finally {
-                //revert System.err to its original print stream
-                System.setErr(originalSysErr);
+                Platform.runLater(() -> {
+                    userErrReportDialog.display(errorStrings);
+                });
+            } else {
+                Platform.runLater(() -> {
+                    userErrReportDialog.display(errorStrings);
+                });
             }
-        if(forRun){
-            showAlert(Alert.AlertType.INFORMATION, "Run Complete");
+            //if run ended due to runtime error, prompt the user 
+            if (forRun) {
+                showAlert(Alert.AlertType.ERROR, "Run Terminated Erroneously");
+            }
+            return false;
+        } finally {
+            //revert System.err to its original print stream
+            System.setErr(originalSysErr);
         }
         return true;
-    }
-    
-    /**
-     * adds a variable to the program given a type name and value
-     * 
-     * @param type the variables type
-     * @param name the variables name
-     * @param value the variables value
-     * @return the new variable or null if the variable already exists
-     */
-    public Var addVar(VarType type, String name, Object value) {
-        //if variable already exists return null
-        if(getVar(name) != null){
-            return null;
-        }
-        //otherwise add the variable and return it
-        else {
-            Var v = new Var(type,name,value);
-            variableContexts.put(v,currentContext);
-            return v;
-        }
-    }
-    
-    /**
-     * returns a variable given a variable name
-     * 
-     * @param name name of variable to return
-     * @return found variable or null if not found
-     */
-    public Var getVar(String name){
-        int i = 0;
-        Var v = null;
-        Object[] vars = variableContexts.keySet().toArray();
-        while (v == null && i < vars.length){
-            if(((Var)vars[i]).getName().equals(name)){
-                v = (Var)vars[i];
-            }
-            i++;
-        }
-        return v;
     }
     
     /**
@@ -346,8 +167,9 @@ public class ProgramRunner {
      * @return boolean for whether the structure of the Flowchart is valid
      */
     public Boolean validateStructure(Flowchart fc){
-        
+        //initialise loop stacks
         whileStack = new Stack<>();
+        forStack = new Stack<>();
         //queue for the vertices of the flowchart
         Queue<Vertex> vertexQueue = new ArrayDeque<>();
         //add start vertex to queue
@@ -380,18 +202,34 @@ public class ProgramRunner {
                     }
                 }
             }
-            
+            //if current vertex represents a loop, add the loop to the respective loop stack
             if(currentVertex.getController() instanceof WhileController){
                 whileStack.push((WhileController)currentVertex.getController());
+            } else if (currentVertex.getController() instanceof ForLoopController) {
+                forStack.push((ForLoopController)currentVertex.getController());
             }
             
+            //if the current vertex represents the end of a loop, remove the loop from the loop stack 
             if(currentVertex.getController() instanceof EndWhileController){
+                //if the loop has not yet been encountered then the program structure is invalid
                 if(whileStack.isEmpty()){
                     valid = false;
                     break;
                 }
+                //if the loop next in the stack is a different loop then the program structure is invalid
                 WhileController requiredWhile = whileStack.pop();
                 if(requiredWhile != ((EndWhileController)currentVertex.getController()).getWhileCtrl()){
+                    valid = false;
+                }
+            } else if(currentVertex.getController() instanceof EndForController){
+                //if the loop has not yet been encountered then the program structure is invalid
+                if(forStack.isEmpty()){
+                    valid = false;
+                    break;
+                }
+                //if the loop next in the stack is a different loop then the program structure is invalid
+                ForLoopController requiredFor = forStack.pop();
+                if(requiredFor != ((EndForController)currentVertex.getController()).getForCtrl()){
                     valid = false;
                 }
             }
@@ -407,12 +245,16 @@ public class ProgramRunner {
                 vertexQueue.addAll(currentVertex.getChildVertices());
                 if(currentVertex.getController() instanceof WhileController){
                     vertexQueue.remove(((WhileController)currentVertex.getController()).getEndWhile().getVertex());
+                } else if (currentVertex.getController() instanceof ForLoopController){
+                    vertexQueue.remove(((ForLoopController)currentVertex.getController()).getEndFor().getVertex());
                 }
             }
         }
-        if(!whileStack.isEmpty()){
+        //if a loop has still not been validated then the program structure is invalid
+        if(!whileStack.isEmpty() || !forStack.isEmpty()){
             valid = false;
         }
+        
         return valid;
     }
     
@@ -471,6 +313,38 @@ public class ProgramRunner {
                     endIfFound = true;
                 }
             }
+            //if current vertex represents a loop, add the loop to the respective loop stack
+            if(currentVertex.getController() instanceof WhileController){
+                whileStack.push((WhileController)currentVertex.getController());
+            } else if (currentVertex.getController() instanceof ForLoopController) {
+                forStack.push((ForLoopController)currentVertex.getController());
+            }
+            
+            //if the current vertex represents the end of a loop, remove the loop from the loop stack 
+            if(currentVertex.getController() instanceof EndWhileController){
+                //if the loop has not yet been encountered then the program structure is invalid
+                if(whileStack.isEmpty()){
+                    valid = false;
+                    break;
+                }
+                //if the loop next in the stack is a different loop then the program structure is invalid
+                WhileController requiredWhile = whileStack.pop();
+                if(requiredWhile != ((EndWhileController)currentVertex.getController()).getWhileCtrl()){
+                    valid = false;
+                }
+            } else if(currentVertex.getController() instanceof EndForController){
+                //if the loop has not yet been encountered then the program structure is invalid
+                if(forStack.isEmpty()){
+                    valid = false;
+                    break;
+                }
+                //if the loop next in the stack is a different loop then the program structure is invalid
+                ForLoopController requiredFor = forStack.pop();
+                if(requiredFor != ((EndForController)currentVertex.getController()).getForCtrl()){
+                    valid = false;
+                }
+            }
+            
         }
         
         //if the current vertex represents an EndIF then return it, otherwise the branch is invalid
@@ -491,640 +365,100 @@ public class ProgramRunner {
      * @param message the String message of the desired alert
      */
     private void showAlert(Alert.AlertType alertType, String message){
-        //Platform.runLater(() -> {
+        Platform.runLater(() -> {
             Alert customAlert = new Alert(alertType);
+            customAlert.initModality(Modality.NONE);
             customAlert.setContentText(message);
             customAlert.showAndWait();
-        //});
-    }
-    
-    /**
-     * given a VarType type and a String value, attempt to return an Object with the corresponding given type and value
-     * 
-     * @param type the type of the object
-     * @param value the value of the object
-     * @return the created object or null if the value will not parse
-     */
-    public Object parseStringValue(VarType type, String value){
-        switch(type){
-            case BOOLEAN:
-                //attempt to parse as a boolean
-                if(value.equals("true")){
-                    return true;
-                } else if (value.equals("false")){
-                    return false;
-                } else{ 
-                    System.out.println("Error: invalid value for a boolean: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for boolean variable: " + value);
-                    return null;
-                }
-            
-            case INTEGER:
-                //attempt to parse as an integer
-                try{
-                    int i = Integer.valueOf(value);
-                    return i;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for an integer: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid value for integer variable: " + value);
-                    return null;
-                }
-            
-            case DOUBLE:
-                //attempt to parse as a double
-                try{
-                    double d = Double.valueOf(value);
-                    return d;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for a double: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid value for double variable: " + value);
-                    return null;
-                }
-            
-            case FLOAT:
-                //attempt to parse as a float
-                try{
-                    if(value.matches("(^([+-]?\\d*\\.?\\d*)f$)|(^([+-]?\\d*)$)")){
-                        float f = Float.valueOf(value);
-                        return f;
-                    }
-                    System.out.println("Error: invalid value for a float: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for float variable: " + value 
-                            + "\n(floats must end in an f if they have a decimal e.g. 2 or 2.1f)");
-                    return null;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for a float: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for float variable: " + value);
-                    return null;
-                }
-            
-            case LONG:
-                //attempt to parse as a long
-                try{
-                    if(value.endsWith("l")){
-                        value = value.substring(0, value.length() - 1);
-                    }
-                    long l = Long.valueOf(value);
-                    return l;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for a long: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for long variable: " + value);
-                    return null;
-                }
-            
-            case SHORT:
-                //attempt to parse as a short
-                try{
-                    short s = Short.valueOf(value);
-                    return s;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for a short: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for short variable: " + value);
-                    return null;
-                }
-            
-            case STRING:
-                //attempt to parse as a string
-                if(value.matches("\"([^\"]*)\"")){
-                    return value.substring(1, value.length() - 1);
-                } else { 
-                    System.out.println("Error: invalid value for a String: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for String variable: " + value 
-                            + "\n(Strings must be in double quotations e.g. \"string\")");
-                    return null;
-                }
-            
-            case CHARACTER:
-                //attempt to parse as a character
-                if(value.matches("'.'")){
-                    return value.charAt(1);
-                } else{
-                    System.out.println("Error: invalid value for a character: "
-                            + "\n\t" + value);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for character variable: " + value 
-                            + "\n(characters must be in single quotations e.g. 'c')");
-                    return null;
-                }
-        }
-        return null;
-    }
-    
-    /**
-     * given a UserInToVarController userInToVar, execute the actions described by the controller
-     * 
-     * @param userInToVar the UserInToVarController that details the actions to execute
-     * @return boolean to represent whether the execution was successful
-     */
-    private boolean runUserInToVar(UserInToVarController userInToVar){
-        //get the user input for the variables value using a text input dialog
-        TextInputDialog userInDialog = new TextInputDialog();
-        userInDialog.setHeaderText("Provide a " + userInToVar.getType().toString().toLowerCase() + " value for variable " + userInToVar.getName());
-        userInDialog.setTitle("User Input To Variable");
-        Optional<String> result = userInDialog.showAndWait();
-        //if the user gave a value
-        if (result.isPresent()) {
-            //attempt to create a variable using the type from userInToVar and the value provided by the user 
-            Object inputObject = parseUserInput(userInToVar.getType(), userInDialog.getEditor().getText());
-            if(inputObject == null){
-                return false;
-            } else {
-                //attempt to add the newly created variable
-                if(addVar(userInToVar.getType(),userInToVar.getName(),inputObject) != null){
-                    System.out.println("new var added:"
-                        + "\n\ttype: " + userInToVar.getType()
-                        + "\n\tname: " + userInToVar.getName()
-                        + "\n\tvalue: " + inputObject);
-                    return true;
-                } else {
-                    System.out.println("Error: variable already exists: "
-                            + "\n\t" + userInToVar.getName());
-                    showAlert(Alert.AlertType.ERROR, "Variable " + userInToVar.getName() + " already exists");
-                    return false;
-                }
-            }
-        //otherwise exit erroneously
-        } else {
-            System.out.println("Error: user failed to input.");
-            showAlert(Alert.AlertType.ERROR, "No input provided");
-            return false;
-        }
-    }
-    
-    /**
-     * given a VarType type and a String input provided by a user at runtime, 
-     * attempt to return an Object with the corresponding given type and input value
-     * 
-     * @param type the type of the object
-     * @param value the value of the object
-     * @return the created object or null if the value will not parse
-     */
-    private Object parseUserInput(VarType type, String input){
-        switch(type){
-            case BOOLEAN:
-                //attempt to parse as a boolean
-                return Boolean.valueOf(input);
-            
-            case INTEGER:
-                //parse using parseStringValue()
-                return parseStringValue(type, input);
-            
-            case DOUBLE:
-                //parse using parseStringValue()
-                return parseStringValue(type, input);
-            
-            case FLOAT:
-                //attempt to parse as a float
-                try{
-                    float f = Float.valueOf(input);
-                    return f;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for a float: "
-                            + "\n\t" + input);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for float variable");
-                    return null;
-                }
-            
-            case LONG:
-                //attempt to parse as a long
-                try{
-                    long l = Long.valueOf(input);
-                    return l;
-                } catch (NumberFormatException e){
-                    System.out.println("Error: invalid value for a long: "
-                            + "\n\t" + input);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for long variable");
-                    return null;
-                }
-            
-            case SHORT:
-                //parse using parseStringValue()
-                return parseStringValue(type, input);
-            
-            case STRING:
-                //simply return input
-                return input;
-                
-            case CHARACTER:
-                //attempt to parse as a character
-                if(input.matches(".")){
-                    return input.charAt(0);
-                } else {
-                    System.out.println("Error: invalid value for a character: "
-                            + "\n\t" + input);
-                    showAlert(Alert.AlertType.ERROR, "Invalid input for char variable");
-                    return null;
-                }
-        }
-        return null;
+        });
     }
 
     /**
-     * given a VarDecController varDecContr, execute the actions described by the controller
+     * Converts a given flowchart into a String representing the program in Java
      * 
-     * @param varDecContr the VarDecController that details the actions to execute
-     * @return boolean to represent whether the execution was successful
+     * @param fc flowchart to convert to Java
+     * @param progName the name of the program
+     * @param forRun whether the program is to be run
+     * @param forSyntaxCheck whether the syntax of the program is to be checked but the program is not to be run
+     * @param functions functions that should also be converted to Java for the program
+     * @return String representing the program in Java
      */
-    private boolean runVarDec(VarDecController varDecContr) {
-        //if the variable is declared using an expression
-        if(varDecContr.isUsingExpr()){
-            //create an expression evaluator to evaluate the expression
-            ExpressionEvaluator varDecEval = new ExpressionEvaluator(getVariables(), varDecContr.getValue(), false);
-            Object evalResult;
-            //change the System.err to capture any user created errors
-            PrintStream originalSysErr = System.err;
-            errorStrings = new ArrayList<>();
-            System.setErr(userErrPrintStream);
-            //evaluate the expression
-            try{
-                evalResult = varDecEval.eval();
-            } catch (UserCreatedExprException e){
-                userErrReportDialog.display(errorStrings);
-                return false;
-            } finally {
-                //revert System.err to its original print stream
-                System.setErr(originalSysErr);
-            }
-            
-            //attempt to parse the resulting value to the required type
-            Object givenObject = parseExprObjectValue(varDecContr.getType(), evalResult, varDecContr.getValue());
-            if(givenObject == null){
-                return false;
-            } else {
-                //attempt to add the variables to the variable list
-                if(addVar(varDecContr.getType(),varDecContr.getName(),givenObject) != null){
-                    System.out.println("new var added:"
-                        + "\n\ttype: " + varDecContr.getType()
-                        + "\n\tname: " + varDecContr.getName()
-                        + "\n\tvalue: " + givenObject);
-                    return true;
-                } else {
-                    System.out.println("Error: variable already exists: "
-                            + "\n\t" + varDecContr.getName());
-                    showAlert(Alert.AlertType.ERROR, "Variable " + varDecContr.getName() + " already exists");
-                    return false;
-                }
-            }
-        } else {
-            //attempt to parse the given value to the required type
-            Object givenObject = parseStringValue(varDecContr.getType(), varDecContr.getValue());
-            if(givenObject == null){
-                return false;
-            } else {
-                //attempt to add the variables to the variable list
-                variableContexts.put(new Var(varDecContr.getType(), varDecContr.getName(), givenObject), currentContext);
-                System.out.println("new var added:"
-                        + "\n\ttype: " + varDecContr.getType()
-                        + "\n\tname: " + varDecContr.getName()
-                        + "\n\tvalue: " + givenObject);
-                return true;
-            }
-        }
-    }
-    
-    /**
-     * given a VarType type, Object value and String expr attempt to return an Object with the 
-     * corresponding given type and input value, using casting
-     * 
-     * @param type the type of the object
-     * @param value the value of the object
-     * @param expr the expression that returns the value of the value variable
-     * @return the created object or null if the value will not parse
-     */
-    public Object parseExprObjectValue(VarType type, Object value, String expr){
-        switch(type){
-            case BOOLEAN:
-                //attempt to cast to a boolean
-                try{
-                    boolean b = (boolean)value;
-                    return b;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for a boolean: "
-                            + "\n\t" + expr);
-                    showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to boolean: " + expr);
-                    return null; 
-                }
-            
-            case INTEGER:
-                //attempt to cast to an integer
-                try{
-                    int i = (int)value;
-                    return i;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for an integer: "
-                            + "\n\t" + expr);
-                    showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to integer: " + expr);
-                    return null; 
-                }
-            
-            case DOUBLE:
-                //attempt to cast to a double
-                try{
-                    double d = (double)value;
-                    return d;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for a double: "
-                            + "\n\t" + expr);
-                    showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to double: " + expr);
-                    return null; 
-                }
-            
-            case FLOAT:
-                //attempt to cast to a float
-                try{
-                    float f = (float)value;
-                    return f;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for a float: "
-                            + "\n\t" + expr);
-                    showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to float: " + expr);
-                    return null;
-                }
-            
-            case LONG:
-                //attempt to cast to a long
-                try{
-                    long l = (long)value;
-                    return l;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for a long: "
-                            + "\n\t" + expr);
-                    showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to float: " + expr);
-                    return null; 
-                }
-            
-            case SHORT:
-                //attempt to cast to a short
-                try{
-                    short s = (short)value;
-                    return s;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for a short: "
-                            + "\n\t" + expr);
-                   showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to short: " + expr);
-                   return null; 
-                }
-            
-            case STRING:
-                //attempt to cast to a String
-                try{
-                    String s = (String)value;
-                    return s;
-                } catch (ClassCastException e){
-                    System.out.println("Error: invalid expression for a String: "
-                            + "\n\t" + expr);
-                   showAlert(Alert.AlertType.ERROR, "Expression does not evaluate to String: " + expr);
-                   return null; 
-                }
-            
-            case CHARACTER:
-                //always fail for character types
-                System.out.println("Error: attempted use of expression for a character.");
-                showAlert(Alert.AlertType.ERROR, "Expressions cannot be used for characters.");
-                return null;
-        }
-        return null;
-    }
-    
-    /**
-     * given a OutputController outputContr, execute the actions described by the controller
-     * 
-     * @param outputContr the OutputController that details the actions to execute
-     * @return boolean to represent whether the execution was successful
-     */
-    private boolean runOutput(OutputController outputContr) {
-        //create an expression evaluator to evaluate the expression
-        ExpressionEvaluator outputEval = new ExpressionEvaluator(getVariables(), outputContr.getValue(), true);
-        //change the System.err to capture any user created errors and change the output stream to capture
-        //outputs resulting from this controller
-        PrintStream originalSysErr = System.err;
-        PrintStream originalSysOut = System.out;
-        errorStrings = new ArrayList<>();
-        outputStrings = new Stack<>();
-        System.setErr(userErrPrintStream);
-        System.setOut(flowJavaOutPrintStream);
-        //evaluate the expression
-        try {
-            outputEval.eval();
-            showAlert(Alert.AlertType.INFORMATION, "Program Outputted: \n" + outputStrings.pop());
-        } catch (UserCreatedExprException e) {
-            userErrReportDialog.display(errorStrings);
-            return false;
-        } finally {
-            //revert System.err and System.out to their original print streams
-            System.setErr(originalSysErr);
-            System.setOut(originalSysOut);
-        }
-        return true;
-    }
-    
-    /**
-     * given a String name and String value, attempt to update a variable with the 
-     * given name using the provided value
-     * 
-     * @param name the name of the variable to update
-     * @param value the new value to assign to the variable
-     * @return boolean representing whether the update was successful
-     */
-    private boolean updateVariable(String name, String value){
-        //try and fetch the variable using the name
-        Var v = getVar(name);
-        if(v == null){
-            System.out.println("Error: attempted to update non-existant var.");
-            showAlert(Alert.AlertType.ERROR, "Variable " + name + " does not exist.\n(if defined check context)");
-            return false;
-        } else {
-            //create an expression evaluator to evaluate the update expression value
-            ExpressionEvaluator updateVarEval = new ExpressionEvaluator(getVariables(), value, false);
-            Object evalResult;
-            //change the System.err to capture any user created errors
-            PrintStream originalSysErr = System.err;
-            errorStrings = new ArrayList<>();
-            System.setErr(userErrPrintStream);
-            //evaluate the expression
-            try{
-                evalResult = updateVarEval.eval();
-            } catch (UserCreatedExprException e){
-                userErrReportDialog.display(errorStrings);
-                return false;
-            } finally {
-                System.setErr(originalSysErr);
-            }
-            //attempt to parse the value to the variables original type
-            Object exprResObject = parseExprObjectValue(v.getType(), evalResult, value);
-            if(exprResObject != null){
-                //update the variable  
-                v.setValue(evalResult);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * given a VarAssignController varAssignController, execute the actions described by the controller
-     * 
-     * @param varAssignController the VarAssignController that details the actions to execute
-     * @return boolean to represent whether the execution was successful
-     */
-    private boolean runVarAssign(VarAssignController varAssignController) {
-        //attempt to update the specified variable with the specified value
-        if(updateVariable(varAssignController.getVarName(), varAssignController.getValue())){
-            System.out.println("var updated:"
-                        + "\n\ttype: " + getVar(varAssignController.getVarName()).getType()
-                        + "\n\tname: " + varAssignController.getVarName()
-                        + "\n\tvalue: " + getVar(varAssignController.getVarName()).getValue());
-            return true;
-        } else {
-            System.out.println("failed to assign variable");
-            return false;
-        }   
-    }
-    
-    /**
-     * given a IfStmtController ifStmtController, execute the actions described by the controller
-     * 
-     * @param ifStmtController the IfStmtController that details the actions to execute
-     * @return boolean to represent whether the execution was successful
-     */
-    private VertexController runIfStmt(IfStmtController ifStmtController){
-        //create an expression evaluator to evaluate the expression
-        ExpressionEvaluator ifEval = new ExpressionEvaluator(getVariables(), ifStmtController.getExpr(), false);
-        Object evalResult;
-        //change the System.err to capture any user created errors
-        PrintStream originalSysErr = System.err;
-        errorStrings = new ArrayList<>();
-        System.setErr(userErrPrintStream);
-        //evaluate the expression
-        try {
-            evalResult = ifEval.eval();
-        } catch (UserCreatedExprException e) {
-            userErrReportDialog.display(errorStrings);
-            return null;
-        } finally {
-            System.setErr(originalSysErr);
-        }
-        //try and parse the resulting value as a boolean
-        Object exprResObject = parseExprObjectValue(VarType.BOOLEAN, evalResult, ifStmtController.getExpr());
-        if (exprResObject != null) {
-            //return a child controller based on the result of the expression evaluation
-            if((boolean)exprResObject){
-                System.out.println("Expression evaluated to: True.");
-                return ifStmtController.getTrueEdge().getEdge().getController().getChild().getController();
-            } else {
-                System.out.println("Expression evaluated to: False.");
-                return ifStmtController.getFalseEdge().getEdge().getController().getChild().getController();
-            }
-        }
-        return null;
-    }
-    
-    private VertexController runWhile(WhileController WhileCtrl){
-        //create an expression evaluator to evaluate the expression
-        ExpressionEvaluator ifEval = new ExpressionEvaluator(getVariables(), WhileCtrl.getExpr(), false);
-        Object evalResult;
-        //change the System.err to capture any user created errors
-        PrintStream originalSysErr = System.err;
-        errorStrings = new ArrayList<>();
-        System.setErr(userErrPrintStream);
-        //evaluate the expression
-        try {
-            evalResult = ifEval.eval();
-        } catch (UserCreatedExprException e) {
-            userErrReportDialog.display(errorStrings);
-            return null;
-        } finally {
-            System.setErr(originalSysErr);
-        }
-        //try and parse the resulting value as a boolean
-        Object exprResObject = parseExprObjectValue(VarType.BOOLEAN, evalResult, WhileCtrl.getExpr());
-        if (exprResObject != null) {
-            //return a child controller based on the result of the expression evaluation
-            if((boolean)exprResObject){
-                System.out.println("Expression evaluated to: True.");
-                return WhileCtrl.getTrueEdge().getEdge().getController().getChild().getController();
-            } else {
-                System.out.println("Expression evaluated to: False.");
-                return WhileCtrl.getEndWhile().getVertex().getChildVertices().get(0).getController();
-            }
-        }
-        return null;
-    }
-    
-    public ArrayList<Var> getVariablesInContext(int context){
-        ArrayList<Var> variables = new ArrayList<>();
-        for(Var v: variableContexts.keySet()){
-            if(variableContexts.get(v) == context){
-                variables.add(v);
-            }
-        }
-        return variables;
-    }
-    
-    public ArrayList<Var> getVariables(){
-        ArrayList<Var> vars = new ArrayList<>();
-            for(Var v: variableContexts.keySet()){
-                vars.add(v);
-            }
-        return vars;
-    }
-
     public String convertToJava(Flowchart fc, String progName, Boolean forRun, Boolean forSyntaxCheck, ArrayList<FunctionFlowchart> functions) {
         String javaProg = "";
         String functionName = "";
+        //if this flowchart is a function
         if (fc instanceof FunctionFlowchart) {
             functionName = ((FunctionFlowchart) fc).getName();
             FunctionFlowchart fFc = (FunctionFlowchart) fc;
             if (forSyntaxCheck) {
+                //add imports and variables needed for a syntax check
                 javaProg += "import javafx.stage.Stage;"
                         + "\nimport java.util.Optional;\nimport javafx.scene.control.Alert;\nimport javafx.scene.control.TextInputDialog;\n"
                         + "import java.io.InputStreamReader;\nimport java.io.BufferedReader;\nimport java.io.IOException;\n\npublic class "
                         + progName + "{"
-                        + "\n\tBufferedReader userInputBr = new BufferedReader(new InputStreamReader(System.in));"
-                        + "\n\tString userInputString;";
-
+                        + "\n\tstatic BufferedReader userInputBr = new BufferedReader(new InputStreamReader(System.in));"
+                        + "\n\tstatic String userInputString;";
             }
+            //make the function static if it is not for running
             if(forRun){
-            javaProg += "\n\tpublic " + functionTypeToString(fFc.getReturnType()) + " "
+                javaProg += "\n\tpublic " + functionTypeToString(fFc.getReturnType()) + " "
                     + fFc.getName() + "(";
             } else {
                 javaProg += "\n\tpublic static " + functionTypeToString(fFc.getReturnType()) + " "
                     + fFc.getName() + " (";
             }
+            //add any parameters
             if (!fFc.getParameters().isEmpty()) {
                 for (Var v : fFc.getParameters()) {
                     javaProg += functionTypeToString(v.getType()) + " " + v.getName() + ", ";
                 }
                 javaProg = javaProg.substring(0, javaProg.length() - 2);
             }
-            javaProg += ") throws IOException{\n";
+            //finish of the header
+            if(forRun){
+                javaProg += ") throws IOException, InterruptedException{\n";
+            } else {
+                javaProg += ") throws IOException{\n";
+            }
         } else {
             if (forRun) {
+                //add imports and variables needed for a run
                 javaProg += "import javafx.stage.Stage;"
+                        + "\nimport javafx.application.Platform;"
+                        + "\nimport java.util.concurrent.Semaphore;"
+                        + "\nimport javafx.stage.Modality;"
                         + "\nimport java.util.Optional;\nimport javafx.scene.control.Alert;\nimport javafx.scene.control.TextInputDialog;\n"
-                        + "import java.io.InputStreamReader;\nimport java.io.BufferedReader;\nimport java.io.IOException;\n\npublic class "
-                        + progName + " extends javafx.application.Application{"
-                        + "\n\tBufferedReader userInputBr = new BufferedReader(new InputStreamReader(System.in));"
-                        + "\n\tString userInputString;\n"
-                        + "\n\t@Override"
-                        + "\n\tpublic void start(Stage primaryStage) throws IOException {run();}"
-                        + "\n\tpublic void run() throws IOException{\n";
-
-            } else {
-                javaProg += "import java.io.InputStreamReader;\nimport java.io.BufferedReader;\nimport java.io.IOException;\n\npublic class "
-                        + progName + "{" 
+                        + "import java.io.InputStreamReader;\nimport java.io.BufferedReader;\nimport java.io.IOException;\n"
+                        + "\npublic class " + progName + " extends javafx.application.Application{"
+                        + "\nstatic boolean running = true;\n"
                         + "\n\tBufferedReader userInputBr = new BufferedReader(new InputStreamReader(System.in));"
                         + "\n\tString userInputString;"
+                        + "\n\tstatic Semaphore semaphore;"
+                        + "\n\tstatic Alert customAlert;"
+                        + "\n\tstatic TextInputDialog userInDialog;"
+                        + "\n\tstatic Boolean isResultPresent = false;"
+                        + "\n\t@Override"
+                        + "\n\tpublic void start(Stage primaryStage) throws IOException, InterruptedException {run();}"
+                        + "\n\tpublic void run() throws IOException, InterruptedException{\n"
+                        + "\t\tsemaphore = new Semaphore(0);\n" 
+                        + "\t\tPlatform.runLater(() -> {\n"
+                        + "\t\t\tcustomAlert = new Alert(Alert.AlertType.INFORMATION);\n"
+                        + "\t\t\tuserInDialog = new TextInputDialog();\n"
+                        + "\t\t\tsemaphore.release();\n"
+                        + "\t\t});\n"
+                        + "\t\tsemaphore.acquire();\n";
+
+            } else {
+                //add imports and variables needed for a syntax check
+                javaProg += "import java.io.InputStreamReader;\nimport java.io.BufferedReader;\nimport java.io.IOException;\n\npublic class "
+                        + progName + "{" 
+                        + "\n\tstatic BufferedReader userInputBr = new BufferedReader(new InputStreamReader(System.in));"
+                        + "\n\tstatic String userInputString;"
                         + "\n\tpublic static void main(String[] args) throws IOException{\n";
             }
         }
+        
+        //set initial value for tab index
         tabIndex = 2;
         
         //stack to hold the vertices that need to be converted
@@ -1138,7 +472,7 @@ public class ProgramRunner {
         while(!controllerStack.isEmpty()) {
             //get next node that needs to be converted
             currentController = controllerStack.pop();
-            //add lines of java to javaProg based on the class of the controller
+            //add lines of java to javaProg based on the class of the controller and whether the program is to be run
             if(currentController instanceof UserInToVarController){
                 javaProg += convertUserInToVar((UserInToVarController)currentController, tabIndex, forRun);
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
@@ -1147,14 +481,22 @@ public class ProgramRunner {
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
             } else if(currentController instanceof OutputController){
                 if(forRun){
-                    javaProg += repeatString("\t",tabIndex) + "showAlert(Alert.AlertType.INFORMATION, " + "\"Program Outputted: \" + " + ((OutputController)currentController).getValue() + ");\n";
+                    javaProg += repeatString("\t",tabIndex) + "if(running){\n"
+                            + "showAlert(Alert.AlertType.INFORMATION, \"Program Outputted: \" + " + ((OutputController)currentController).getExpr() + ");"
+                            + repeatString("\t",tabIndex) + "\n}\n";;
                 } else {
-                    javaProg += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                    javaProg += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getExpr() + ");\n";
                 }
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
             } else if(currentController instanceof VarAssignController){
                 VarAssignController currVarAssign = (VarAssignController)currentController;
-                javaProg += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                if(forRun){
+                    javaProg += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    javaProg += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n";
+                }
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
             } else if(currentController instanceof IfStmtController){
                 IfStmtController currIfStmt = (IfStmtController)currentController;
@@ -1162,32 +504,60 @@ public class ProgramRunner {
                 controllerStack.push(currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController());
             } else if(currentController instanceof WhileController){
                 WhileController currWhile = (WhileController)currentController;
-                javaProg += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                if(forRun){
+                javaProg += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + " && running){\n" 
                         + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                    javaProg += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                }
                 controllerStack.push(currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController());
             } else if (currentController instanceof RecurseController){
                 RecurseController currRec = (RecurseController)currentController;
-                if(currRec.getVariableForValue() == null){
-                    javaProg += repeatString("\t",tabIndex) +((FunctionFlowchart)fc).getName() + "(" + currRec.getParameterVals() + ");\n";
+                if(forRun){
+                    if (currRec.getVariableForValue() == null) {
+                        javaProg += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    } else {
+                        javaProg += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    }
                 } else {
-                    javaProg += repeatString("\t",tabIndex) + currRec.getVariableForValue() + " = " + ((FunctionFlowchart)fc).getName() + "(" + currRec.getParameterVals() + ");\n";
+                    if (currRec.getVariableForValue() == null) {
+                        javaProg += repeatString("\t", tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    } else {
+                        javaProg += repeatString("\t", tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    }
                 }
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
             } else if (currentController instanceof FunctInvokeController){
-                javaProg += repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                if(forRun){
+                    javaProg += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + ((FunctInvokeController)currentController).getJavaDescription() + "\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    javaProg += repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                }
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
             } else if (currentController instanceof ArrayDecController){
                 javaProg += repeatString("\t",tabIndex) + ((ArrayDecController)currentController).getJavaDescription() + "\n";
                 controllerStack.push(currentController.getVertex().getChildVertices().get(0).getController());
             } else if(currentController instanceof ForLoopController){
                 ForLoopController currFor = (ForLoopController)currentController;
-                javaProg += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                if(forRun){
+                javaProg += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + " && running; " + currFor.getUpdateExpr() + "){\n" 
                         + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                  javaProg += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                        + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);  
+                }
                 controllerStack.push(currFor.getEndFor().getVertex().getChildVertices().get(0).getController());
             }
-            
         }
         
+        //add return statement with a return expression where appropriate for functions
         if(fc instanceof FunctionFlowchart){
             FunctionFlowchart fFc = (FunctionFlowchart) fc;
             if (fFc.getRetunVal().isEmpty()){
@@ -1197,50 +567,97 @@ public class ProgramRunner {
             }
         }
         
-        if((!(fc instanceof FunctionFlowchart) && forRun) || ((fc instanceof FunctionFlowchart) && forSyntaxCheck)) {
-            
-            javaProg += "\t}\n\tpublic String getUserInput(String type, String name){"
-                    + "\n\t\tTextInputDialog userInDialog = new TextInputDialog();\n"
+        if((!(fc instanceof FunctionFlowchart) && forRun)) {
+            //finish program and add other funcions used for running
+            javaProg += "\t\tsemaphore = new Semaphore(0);\n" 
+                    + "\t\tif(running){"
+                    + "\t\t\t\tshowAlert(Alert.AlertType.INFORMATION, \"Run Complete\");"
+                    + "\t\t\n}"
+                    + "\t}\n\tpublic void getUserInput(String type, String name) throws InterruptedException{"
+                    + "\n\t\tsemaphore = new Semaphore(0);\n"
+                    + "\n\t\tisResultPresent = false;"
+                    + "\t\tPlatform.runLater(() -> {\n"
+                    + "\t\tuserInDialog = new TextInputDialog();\n"
                     + "\t\tuserInDialog.setHeaderText(\"Provide a \" + type + \" value for variable \" + name);\n"
                     + "\t\tuserInDialog.setTitle(\"User Input To Variable\");\n"
+                    + "\t\tuserInDialog.initModality(Modality.NONE);\n"
                     + "\t\tOptional<String> result = userInDialog.showAndWait();\n"
-                    + "\t\tif (result.isPresent()) {\n"
-                    + "\t\t\treturn userInDialog.getEditor().getText();\n"
+                    + "\t\tif(result.isPresent()) {\n"
+                    + "\t\t\tisResultPresent = true;"
+                    + "\t\t}\n"
+                    + "\t\tsemaphore.release();\n"
+                    + "\t\t});\n"
+                    + "\t\tsemaphore.acquire();\n"
+                    + "\t\tif(isResultPresent){\n"
+                    + "\t\t\tuserInputString = userInDialog.getEditor().getText();\n"
                     + "\t\t} else {\n"
                     + "\t\t\tshowAlert(Alert.AlertType.ERROR, \"No input provided\");\n"
-                    + "\t\t\treturn null;\n"
-                    + "\t\t}\n\t}"
-                    + "\n\tprivate void showAlert(Alert.AlertType alertType, String message){\n"
-                    + "\t\tAlert customAlert = new Alert(alertType);\n"
-                    + "\t\tcustomAlert.setContentText(message);\n"
-                    + "\t\tcustomAlert.showAndWait();\n"
+                    + "\t\t\tuserInputString = null;\n"
+                    + "\t\t}"
+                    + "\n\t}"
+                    + "\n\tprivate void showAlert(Alert.AlertType alertType, String message) throws InterruptedException {\n"
+                    + "\t\tsemaphore = new Semaphore(0);\n"
+                    + "\t\tPlatform.runLater(() -> {"
+                    + "\t\t\tcustomAlert = new Alert(alertType);\n"
+                    + "\t\t\tcustomAlert.initModality(Modality.NONE);\n"
+                    + "\t\t\tcustomAlert.setContentText(message);\n"
+                    + "\t\t\tcustomAlert.showAndWait();\n"
+                    + "\t\tsemaphore.release();\n"
+                    + "\t\t});\n"
+                    + "\t\tsemaphore.acquire();\n"
+                    + "\t}\n"
+                    + "\tpublic static void cancelRun(){\n"
+                    + "\t\trunning = false;\n"
+                    + "\t\tcustomAlert.close();\n"
+                    + "\t\tuserInDialog.close();\n"
+                    + "\t\tsemaphore.release();\n"
                     + "\t}";
             
-            if(fc instanceof FunctionFlowchart){
-                for (FunctionFlowchart fFc : functions) {
-                    javaProg += convertToJava(fFc, "", forRun, false, null);
-                }
-            }
         } else {
+            //add closing brackets to program
+            if (fc instanceof FunctionFlowchart && forSyntaxCheck) {
+                javaProg += "\t}\n";
+                for (FunctionFlowchart fFc : functions) {
+                    javaProg += convertToJava(fFc, "", false, false, null);
+                }
+            } else {
             javaProg += "\t}";
+            }
         }
         
+        //add the other functions to the program code
         for(FunctionFlowchart fFc: fc.getFunctions()){
             javaProg += convertToJava(fFc, "", forRun, false, null);
         }
+        //add final closing bracket if required
         if(!(fc instanceof FunctionFlowchart) || (fc instanceof FunctionFlowchart && forSyntaxCheck)){
             javaProg += "\n}";
         }
         return javaProg;
     }
     
+    /**
+     * Given a UserInToVarController, generate the equivalent Java code in a String and return it
+     * 
+     * @param ctrl UserInToVarController to use to generate the Java code String
+     * @param tabIndex how many tabs should be inserted before each line of code
+     * @param forRun whether the code will be used for a program run
+     * @return String representing the equivalent Java code
+     */
     private String convertUserInToVar(UserInToVarController ctrl, int tabIndex, boolean forRun){
         String java = ""; 
         if(forRun){
-            java += repeatString("\t",tabIndex) + "userInputString = getUserInput(\"" + ctrl.getType().toString().toLowerCase() + "\", \"" + ctrl.getName() + "\");\n";
+            //make sure program hasn't been terminated by user
+            java += "if(running){\n"
+                //use the getUserInput function to get user input
+                + repeatString("\t",tabIndex+2) + "getUserInput(\"" + ctrl.getType().toString().toLowerCase() + "\", \"" + ctrl.getName() + "\");\n"
+                + repeatString("\t",tabIndex) + "}\n";
+            
         } else {
+            //use system.in to get user input
             java += repeatString("\t",tabIndex) + "userInputString = userInputBr.readLine();\n";
         }
+        //set the variable to the value of the user input
         switch (ctrl.getType()){
             case STRING:
                 java += repeatString("\t",tabIndex) + "String " + ctrl.getName() + " = userInputString;\n";
@@ -1270,6 +687,13 @@ public class ProgramRunner {
         return java;
     }
     
+    /**
+     * Given a VarDecController, generate the equivalent Java code in a String and return it
+     * 
+     * @param ctrl VarDecController to use to generate the Java code String
+     * @param tabIndex how many tabs should be inserted before each line of code
+     * @return String representing the equivalent Java code
+     */
     private String convertVarDec(VarDecController ctrl, int tabIndex){
         String java = "";
         switch (ctrl.getType()){
@@ -1298,27 +722,52 @@ public class ProgramRunner {
                 java += repeatString("\t",tabIndex) + "Short " + ctrl.getName() + " = ";
                 break;
         }
-        java += ctrl.getValue() + ";\n";
+        java += ctrl.getExpr() + ";\n";
         return java;
     }
 
+    /**
+     * Given a String s and an integer i, return s repeated i times 
+     * @param s String to repeat
+     * @param i number of repeats
+     * @return String s repeated i times
+     */
     private String repeatString(String s, int i){
         return new String(new char[i]).replace("\0", s);
     }
     
+    /**
+     * Given a IfStmtController, generate the equivalent Java code in a String and return it
+     * 
+     * @param ctrl UserInToVarController to use to generate the Java code String
+     * @param tabIndex how many tabs should be inserted before each line of code
+     * @param forRun whether the code will be used for a program run
+     * @param functionName name of the current function
+     * @return String representing the equivalent Java code
+     */
     private String convertIf(IfStmtController ctrl, int tabIndex, boolean forRun, String functionName){
         String java = repeatString("\t",tabIndex) + "if(" + ctrl.getExpr() + "){\n";
         tabIndex ++;
+        //convert the two seperate branches of the statement
         java += convertIfBranch(ctrl.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName) + repeatString("\t",tabIndex-1) + "}\n" + repeatString("\t",tabIndex-1) + "else{\n";
         java += convertIfBranch(ctrl.getFalseEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName) + repeatString("\t",tabIndex-1) + "}\n";
         return java;
     }
     
+    /**
+     * Given an vertex controller of a if statement branch, generate the rest of the equivalent Java code of the if branch body in a String and return it
+     * (does not include closing bracket)
+     * 
+     * @param currentController VertexController to start converting the rest of the if statement branch from
+     * @param tabIndex how many tabs should be inserted before each line of code
+     * @param forRun whether the code will be used for a program run
+     * @param functionName name of the current function
+     * @return  String representing the equivalent Java code of the if statement branch body
+     */
     private String convertIfBranch(VertexController currentController, int tabIndex, boolean forRun, String functionName){
         String java = "";
-        
         while(!(currentController instanceof EndIfController)){
-            //add lines of java to javaProg based on the class of the controller
+            //add lines of java to javaProg based on the class of the controller and whether the program is to be run
             if(currentController instanceof UserInToVarController){
                 java += convertUserInToVar((UserInToVarController)currentController, tabIndex, forRun);
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
@@ -1327,14 +776,22 @@ public class ProgramRunner {
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof OutputController){
                 if(forRun){
-                    java += repeatString("\t",tabIndex) + "showAlert(Alert.AlertType.INFORMATION, " + "\"Program Outputted: \"+" + ((OutputController)currentController).getValue() + ");\n";
+                    java += repeatString("\t",tabIndex) + "if(running){"
+                            + "showAlert(Alert.AlertType.INFORMATION, \"Program Outputted: \" + " + ((OutputController)currentController).getExpr() + ");"
+                            + repeatString("\t",tabIndex) + "}";;
                 } else {
-                    java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                    java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getExpr() + ");\n";
                 }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof VarAssignController){
                 VarAssignController currVarAssign = (VarAssignController)currentController;
-                java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                if(forRun){
+                    java += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n";
+                }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof IfStmtController){
                 IfStmtController currIfStmt = (IfStmtController)currentController;
@@ -1342,33 +799,76 @@ public class ProgramRunner {
                 currentController = currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof WhileController){
                 WhileController currWhile = (WhileController)currentController;
-                java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                if(forRun){
+                    java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + " && running){\n" 
                         + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                    java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                }
                 currentController = currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof RecurseController){
                 RecurseController currRec = (RecurseController)currentController;
-                if(currRec.getVariableForValue() == null){
-                    java += repeatString("\t",tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                if(forRun){
+                    if (currRec.getVariableForValue() == null) {
+                        java += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    } else {
+                        java += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    }
                 } else {
-                    java += repeatString("\t",tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    if (currRec.getVariableForValue() == null) {
+                        java += repeatString("\t", tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    } else {
+                        java += repeatString("\t", tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    }
                 }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof FunctInvokeController){
-                java += repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                if(forRun){
+                    java += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + ((FunctInvokeController)currentController).getJavaDescription() + "\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    java += repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof ArrayDecController){
                 java += repeatString("\t",tabIndex) + ((ArrayDecController)currentController).getJavaDescription() + "\n";
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof ForLoopController){
                 ForLoopController currFor = (ForLoopController)currentController;
-                java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
-                        + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                if(forRun){
+                    if(currFor.getConditionExpr().isEmpty()){
+                        java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + "running; " + currFor.getUpdateExpr() + "){\n" 
+                            + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                    } else {
+                        java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + " && running; " + currFor.getUpdateExpr() + "){\n" 
+                            + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                    }
+                } else {
+                  java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                        + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);  
+                }
                 currentController = currFor.getEndFor().getVertex().getChildVertices().get(0).getController();
             }
         }
         return java;
     }
     
+    /**
+     * Given an vertex controller of a while loop body, generate the rest of the equivalent Java code of the while loop body in a String and return it
+     * (includes closing bracket)
+     * 
+     * @param currentController VertexController to start converting the rest of the while loop body from
+     * @param tabIndex how many tabs should be inserted before each line of code
+     * @param forRun whether the code will be used for a program run
+     * @param functionName name of the current function
+     * @return  String representing the equivalent Java code of the while loop body
+     */
     private String convertWhileBody(VertexController currentController, int tabIndex, boolean forRun, String functionName){
         String java = "";
         tabIndex ++;
@@ -1382,14 +882,22 @@ public class ProgramRunner {
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof OutputController){
                 if(forRun){
-                    java += repeatString("\t",tabIndex) + "showAlert(Alert.AlertType.INFORMATION, " + "\"Program Outputted: \"+" + ((OutputController)currentController).getValue() + ");\n";
+                    java += repeatString("\t",tabIndex) + "if(running){"
+                            + "showAlert(Alert.AlertType.INFORMATION, \"Program Outputted: \" + " + ((OutputController)currentController).getExpr() + ");"
+                            + repeatString("\t",tabIndex) + "}";;
                 } else {
-                    java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                    java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getExpr() + ");\n";
                 }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof VarAssignController){
                 VarAssignController currVarAssign = (VarAssignController)currentController;
-                java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                if(forRun){
+                    java += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n";
+                }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof IfStmtController){
                 IfStmtController currIfStmt = (IfStmtController)currentController;
@@ -1397,33 +905,71 @@ public class ProgramRunner {
                 currentController = currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof WhileController){
                 WhileController currWhile = (WhileController)currentController;
-                java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                if(forRun){
+                    java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + " && running){\n" 
                         + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                    java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                }
                 currentController = currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof RecurseController){
                 RecurseController currRec = (RecurseController)currentController;
-                if(currRec.getVariableForValue() == null){
-                    java += repeatString("\t",tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                if(forRun){
+                    if (currRec.getVariableForValue() == null) {
+                        java += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    } else {
+                        java += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    }
                 } else {
-                    java += repeatString("\t",tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    if (currRec.getVariableForValue() == null) {
+                        java += repeatString("\t", tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    } else {
+                        java += repeatString("\t", tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    }
                 }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof FunctInvokeController){
-                java +=  repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                if(forRun){
+                    java += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + ((FunctInvokeController)currentController).getJavaDescription() + "\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    java += repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof ArrayDecController){
                 java += repeatString("\t",tabIndex) + ((ArrayDecController)currentController).getJavaDescription() + "\n";
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof ForLoopController){
                 ForLoopController currFor = (ForLoopController)currentController;
-                java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                if(forRun){
+                    java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + " && running; " + currFor.getUpdateExpr() + "){\n" 
                         + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                  java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                        + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);  
+                }
                 currentController = currFor.getEndFor().getVertex().getChildVertices().get(0).getController();
             }
         }
         return java + repeatString("\t",tabIndex-1) + "}\n";
     }
     
+    /**
+     * Given an vertex controller of a for loop body, generate the rest of the equivalent Java code of the for loop body in a String and return it
+     * (includes closing bracket)
+     * 
+     * @param currentController VertexController to start converting the rest of the for loop body from
+     * @param tabIndex how many tabs should be inserted before each line of code
+     * @param forRun whether the code will be used for a program run
+     * @param functionName name of the current function
+     * @return  String representing the equivalent Java code of the for loop body
+     */
     private String convertForBody(VertexController currentController, int tabIndex, boolean forRun, String functionName){
         String java = "";
         tabIndex ++;
@@ -1437,14 +983,22 @@ public class ProgramRunner {
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof OutputController){
                 if(forRun){
-                    java += repeatString("\t",tabIndex) + "showAlert(Alert.AlertType.INFORMATION, " + "\"Program Outputted: \"+" + ((OutputController)currentController).getValue() + ");\n";
+                    java += repeatString("\t",tabIndex) + "if(running){"
+                            + "showAlert(Alert.AlertType.INFORMATION, \"Program Outputted: \" + " + ((OutputController)currentController).getExpr() + ");"
+                            + repeatString("\t",tabIndex) + "}";;
                 } else {
-                    java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getValue() + ");\n";
+                    java += repeatString("\t",tabIndex) + "System.out.println(" + ((OutputController)currentController).getExpr() + ");\n";
                 }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof VarAssignController){
                 VarAssignController currVarAssign = (VarAssignController)currentController;
-                java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getValue() + ";\n";
+                if(forRun){
+                    java += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    java += repeatString("\t",tabIndex) + currVarAssign.getVarName() + " = " + currVarAssign.getExpr() + ";\n";
+                }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof IfStmtController){
                 IfStmtController currIfStmt = (IfStmtController)currentController;
@@ -1452,27 +1006,55 @@ public class ProgramRunner {
                 currentController = currIfStmt.getEndIf().getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof WhileController){
                 WhileController currWhile = (WhileController)currentController;
-                java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                if(forRun){
+                    java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + " && running){\n" 
                         + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                    java += repeatString("\t",tabIndex) + "while(" + currWhile.getExpr() + "){\n" 
+                        + convertWhileBody(currWhile.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                }
                 currentController = currWhile.getEndWhile().getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof RecurseController){
                 RecurseController currRec = (RecurseController)currentController;
-                if(currRec.getVariableForValue() == null){
-                    java += repeatString("\t",tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                if(forRun){
+                    if (currRec.getVariableForValue() == null) {
+                        java += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    } else {
+                        java += repeatString("\t",tabIndex) +"if(running){\n"
+                                + repeatString("\t", tabIndex+1) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n"
+                                + repeatString("\t",tabIndex) + "}\n";
+                    }
                 } else {
-                    java += repeatString("\t",tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    if (currRec.getVariableForValue() == null) {
+                        java += repeatString("\t", tabIndex) + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    } else {
+                        java += repeatString("\t", tabIndex) + currRec.getVariableForValue() + " = " + functionName + "(" + currRec.getParameterVals() + ");\n";
+                    }
                 }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof FunctInvokeController){
-                java +=  repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                if(forRun){
+                    java += repeatString("\t",tabIndex) +"if(running){\n"
+                            + repeatString("\t",tabIndex+1) + ((FunctInvokeController)currentController).getJavaDescription() + "\n"
+                            + repeatString("\t",tabIndex) + "}\n";
+                } else {
+                    java += repeatString("\t",tabIndex) + ((FunctInvokeController)currentController).getJavaDescription() + "\n";
+                }
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if (currentController instanceof ArrayDecController){
                 java += repeatString("\t",tabIndex) + ((ArrayDecController)currentController).getJavaDescription() + "\n";
                 currentController = currentController.getVertex().getChildVertices().get(0).getController();
             } else if(currentController instanceof ForLoopController){
                 ForLoopController currFor = (ForLoopController)currentController;
-                java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                if(forRun){
+                    java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + " && running; " + currFor.getUpdateExpr() + "){\n" 
                         + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);
+                } else {
+                  java += repeatString("\t",tabIndex) + "for(" + currFor.getInitialExpr() + "; " + currFor.getConditionExpr() + "; " + currFor.getUpdateExpr() + "){\n" 
+                        + convertForBody(currFor.getTrueEdge().getEdge().getController().getChild().getController(), tabIndex, forRun, functionName);  
+                }
                 currentController = currFor.getEndFor().getVertex().getChildVertices().get(0).getController();
             }
         }
@@ -1492,7 +1074,7 @@ public class ProgramRunner {
         }
         
         //retrive the file manager from the compiler
-        StandardJavaFileManager sfm  = compiler.getStandardFileManager(null, null, null);
+        sfm  = compiler.getStandardFileManager(null, null, null);
         //create a forwarding java file manager using the compiler file manager
         ForwardingJavaFileManager<StandardJavaFileManager> fjfm = new ForwardingJavaFileManager<StandardJavaFileManager>(sfm){
             @Override
@@ -1527,9 +1109,10 @@ public class ProgramRunner {
         
         //compile the class using the compiler
         compiler.getTask(null, fjfm, null, null, null, files).call();
+        semaphore.release();
         try{
-            //load the created class for invokation
-            Class<?> clarse = new ClassLoader(){
+            //load the created unkown class for invokation
+            clarse = new ClassLoader(){
                 @Override
                 public Class<?> findClass(String name){
                     if (!name.startsWith(className)){
@@ -1541,11 +1124,12 @@ public class ProgramRunner {
             }.loadClass(className);
             
             if(run){
-                //invoke the created class
+                //invoke the created unkown class
                 clarse.getMethod(methodName).invoke(clarse.newInstance());
+                
             }
             
-        }catch(ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | NullPointerException x){
+        } catch(ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | NullPointerException x){
             //if an exception arose from the user created expression then throw a custom exception
             if(x instanceof NullPointerException){
                 throw new UserCreatedExprException("Error in user created expression");
@@ -1555,6 +1139,13 @@ public class ProgramRunner {
         }
     }
     
+    /**
+     * given a VarType v convert it to a Java String representing a function type
+     * (null = void)
+     * 
+     * @param v VarType to convert to function type string
+     * @return String representing Java function type
+     */
     private String functionTypeToString(VarType v){
         if(v == null){
             return "void";
@@ -1563,4 +1154,14 @@ public class ProgramRunner {
         }
     }
     
+    /**
+     * calls a function in a user created program that will cancel an execution of the program
+     */
+    public void stopRun(){
+        try {
+            clarse.getMethod("cancelRun").invoke(sfm, new Object[0]);
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
+            throw new RuntimeException("Run failed: " + ex, ex);
+        }
+    }
 }

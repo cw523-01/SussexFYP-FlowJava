@@ -22,6 +22,12 @@ public class VertexViewGestures {
     //a list of all vertices in the application
     private ArrayList<Vertex> verticeList;
     
+    /**
+     * constructor for objects of class VertexViewGestures
+     * 
+     * @param canvas ZoomableCanvas that vertices will be added to
+     * @param verticeList array list of all current vertices
+     */
     public VertexViewGestures(ZoomableCanvas canvas, ArrayList<Vertex> verticeList){
         this.canvas = canvas;
         this.verticeList = verticeList;
@@ -88,6 +94,9 @@ public class VertexViewGestures {
         }
     };
     
+    /**
+     * @return the coordinates for the vertices farthest away from 0,0
+     */
     public Pair<Double,Double> getFurthestVertexCoordinates(){
         //initialise furthest coordinates as 0,0
         Double furthestX = 0.0;
@@ -111,14 +120,23 @@ public class VertexViewGestures {
         }
     };
     
+    /**
+     * @return the event handler for an OnMousePressed gesture
+     */
     public EventHandler<MouseEvent> getOnMousePressedEventHandler() {
         return onMousePressedEventHandler;
     }
     
+    /**
+     * @return the event handler for an OnMouseReleased gesture
+     */
     public EventHandler<MouseEvent> getOnMouseReleasedEventHandler() {
         return onMouseReleasedEventHandler;
     }
     
+    /**
+     * @return the event handler for an OnMouseDragged gesture
+     */
     public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {
         return onMouseDraggedEventHandler;
     }

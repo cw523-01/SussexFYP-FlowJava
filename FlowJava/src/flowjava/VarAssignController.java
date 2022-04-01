@@ -6,18 +6,23 @@
 package flowjava;
 
 /**
+ * Vertex Controller for assigning a value to a variable
  *
  * @author cwood
  */
 public class VarAssignController extends VertexController {
+    //name of variable to assign expr to
     private String varName;
-    private String value;
+    //value expression to assign to variable
+    private String expr;
+    //assignment expression in an ExpressionHBox (must be transient as it is JavaFX object)
     private transient ExpressionHBox exprHbx;
-    private boolean usingExpr;
+    //whether the vertex uses the ExpressionHBox
+    private boolean usingExprHbx;
     
     @Override
     public String getVertexLabel() {
-        return varName + " = " + value; 
+        return varName + " = " + expr; 
     }
 
     @Override
@@ -30,36 +35,76 @@ public class VarAssignController extends VertexController {
         return 1;
     }
 
+    /**
+     * getter for name of variable to assign value to
+     * 
+     * @return name of variable to assign value to
+     */
     public String getVarName() {
         return varName;
     }
 
+    /**
+     * setter for name of variable to assign value to
+     * 
+     * @param varName new expression for name of variable to assign value to
+     */
     public void setVarName(String varName) {
         this.varName = varName;
     }
 
-    public String getValue() {
-        return value;
+    /**
+     * getter for value expression to assign to variable
+     * 
+     * @return value expression to assign to variable
+     */
+    public String getExpr() {
+        return expr;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    /**
+     * setter for value expression to assign to variable
+     * 
+     * @param expr new value for value expression to assign to variable
+     */
+    public void setExpr(String expr) {
+        this.expr = expr;
     }
 
+    /**
+     * getter for value expression in an ExpressionHBox
+     * 
+     * @return value expression in an ExpressionHBox
+     */
     public ExpressionHBox getExprHbx() {
         return exprHbx;
     }
 
+    /**
+     * setter for value expression in an ExpressionHBox
+     * 
+     * @param exprHbx new value expression in ExpressionHBox
+     */
     public void setExprHbx(ExpressionHBox exprHbx) {
         this.exprHbx = exprHbx;
     }
 
-    public boolean isUsingExpr() {
-        return usingExpr;
+    /**
+     * getter for whether the vertex uses the ExpressionHBox
+     * 
+     * @return whether the vertex uses the ExpressionHBox
+     */
+    public boolean isUsingExprHbx() {
+        return usingExprHbx;
     }
 
-    public void setUsingExpr(boolean usingExpr) {
-        this.usingExpr = usingExpr;
+    /**
+     * setter for whether the vertex uses the ExpressionHBox
+     * 
+     * @param usingExprHbx new value for whether the vertex uses the ExpressionHBox
+     */
+    public void setUsingExprHbx(boolean usingExprHbx) {
+        this.usingExprHbx = usingExprHbx;
     }
     
     @Override
