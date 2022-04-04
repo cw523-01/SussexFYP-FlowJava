@@ -5,9 +5,11 @@
  */
 package flowjava;
 
+import java.net.URL;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -19,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -94,7 +97,12 @@ public class CreateExprDialog {
         Scene scene = new Scene(root, 800, 200);          
         stage.setTitle("Create Expression");
         stage.setScene(scene);
-        stage.getIcons().add(new Image("file:images/LogoImg.png"));
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
         stage.showAndWait();
         
         //return null if confirm button not pressed

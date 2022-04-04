@@ -16,7 +16,7 @@ import javafx.scene.shape.Polyline;
  *
  * @author cwood
  */
-public class EdgeView  extends Group {
+public class EdgeView extends Group {
     //the x coordinates for each end of the edge
     private SimpleDoubleProperty x1 = new SimpleDoubleProperty();
     private SimpleDoubleProperty x2 = new SimpleDoubleProperty();

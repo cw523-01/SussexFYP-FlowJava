@@ -5,8 +5,10 @@
  */
 package flowjava;
 
+import java.net.URL;
 import java.util.ArrayList;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
@@ -15,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -65,11 +68,16 @@ public class UserErrReportDialog {
         root.getChildren().addAll(titleTxt, headerTxt, errorsTxtArea, footerTxt);
         root.setPadding(new Insets(10, 50, 50, 50));
         
-        //instantiate and show scene
+        //instantiate scene
         Scene scene = new Scene(root, 600, 400);          
         stage.setTitle("User Created Expression Error Report");
         stage.setScene(scene);
-        stage.getIcons().add(new Image("file:images/LogoImg.png"));
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
         stage.showAndWait();
         
     }

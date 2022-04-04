@@ -5,9 +5,11 @@
  */
 package flowjava;
 
+import java.net.URL;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -17,6 +19,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -82,7 +85,8 @@ public class CreateParameterDialog {
         
         //instantiate the stage
         Stage stage = new Stage();
-        stage.getIcons().add(new Image("file:images/LogoImg.png"));
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
         stage.initModality(Modality.APPLICATION_MODAL);
         
         //instantiate root node
@@ -116,10 +120,15 @@ public class CreateParameterDialog {
             typeCmbx.setValue(paramType);
         }
           
-        //instantiate and show scene
+        //instantiate scene
         Scene scene = new Scene(root, 400, 200);
         stage.setTitle("Parmeter");
         stage.setScene(scene);
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
+        
         stage.showAndWait();
         
         //if prameter is valid then return its values, else return null

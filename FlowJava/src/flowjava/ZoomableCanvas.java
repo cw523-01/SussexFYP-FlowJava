@@ -18,7 +18,7 @@ public class ZoomableCanvas extends Pane{
     private static final double MIN_SCALE = .05d;
     
     //the current scale value of the pane
-    DoubleProperty customScale = new SimpleDoubleProperty(1.0);
+    private DoubleProperty customScale = new SimpleDoubleProperty(1.0);
     
     public ZoomableCanvas() {
         //setup size and style of the pane

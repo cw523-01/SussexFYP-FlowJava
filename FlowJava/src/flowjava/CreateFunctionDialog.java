@@ -6,12 +6,14 @@
 package flowjava;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -37,6 +39,7 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 
@@ -247,7 +250,8 @@ public class CreateFunctionDialog {
         stage.setMinHeight(850);
         stage.setTitle("Function Editor");
         stage.setScene(scene);
-        stage.getIcons().add(new Image("file:images/LogoImg.png"));
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
         
         //add event filter for zooming
         scene.addEventFilter(ScrollEvent.ANY, dialogZc.getOnScrollEventHandler());
@@ -600,8 +604,8 @@ public class CreateFunctionDialog {
         connectionBtn.setPrefSize(198, 50);
         
         //add icon for connections to connection button
-        File imgFile = new File("images/ConnectionImg.png");
-        Image connectionImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/ConnectionImg.png");
+        Image connectionImg = new Image(imgURL.toString());
         ImageView connectionImgView = new ImageView();
         connectionImgView.setPreserveRatio(true);
         connectionImgView.setFitHeight(30);
@@ -635,8 +639,8 @@ public class CreateFunctionDialog {
         varDeclarationBtn.setPrefSize(198, 50);
         
         //add icon for I/O to button
-        imgFile = new File("images/IoImg.png");
-        Image IoImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/IoImg.png");
+        Image IoImg = new Image(imgURL.toString());
         ImageView varDecImgView = new ImageView();
         varDecImgView.setPreserveRatio(true);
         varDecImgView.setFitHeight(30);
@@ -851,8 +855,8 @@ public class CreateFunctionDialog {
         varAssignmentBtn.setPrefSize(198, 50);
         
         //add icon for process to button
-        imgFile = new File("images/ProcessImg.png");
-        Image processImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/ProcessImg.png");
+        Image processImg = new Image(imgURL.toString());
         ImageView varAssignImgView = new ImageView();
         varAssignImgView.setPreserveRatio(true);
         varAssignImgView.setFitHeight(30);
@@ -917,8 +921,8 @@ public class CreateFunctionDialog {
         ifStmtBtn.setPrefSize(198, 50);
         
         //add icon for decision to button
-        imgFile = new File("images/DecisionImg.png");
-        Image decisionImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/DecisionImg.png");
+        Image decisionImg = new Image(imgURL.toString());
         ImageView ifImgView = new ImageView();
         ifImgView.setPreserveRatio(true);
         ifImgView.setFitHeight(30);
@@ -1144,8 +1148,8 @@ public class CreateFunctionDialog {
         functBtn.setTextAlignment(TextAlignment.CENTER);
         
         //add icon for invoke to button
-        imgFile = new File("images/InvokeImg.png");
-        Image invokeImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/InvokeImg.png");
+        Image invokeImg = new Image(imgURL.toString());
         ImageView invokeImgView = new ImageView();
         invokeImgView.setPreserveRatio(true);
         invokeImgView.setFitHeight(30);
@@ -1636,6 +1640,11 @@ public class CreateFunctionDialog {
                 setUpVertexViewHandlers(v);
             }
         }
+        
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
         
         stage.showAndWait();
         

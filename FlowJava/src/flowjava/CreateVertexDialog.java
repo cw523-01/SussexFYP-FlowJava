@@ -5,12 +5,14 @@
  */
 package flowjava;
 
+import java.net.URL;
 import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -22,6 +24,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -119,7 +122,8 @@ public class CreateVertexDialog {
         //instantiate the stage
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.getIcons().add(new Image("file:images/LogoImg.png"));
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
         
         
         //instantiate create expression button
@@ -784,10 +788,15 @@ public class CreateVertexDialog {
         }
         
         
-        //instantiate and show scene
+        //instantiate scene
         Scene scene = new Scene(root, sceneWidth, sceneHeight);
         stage.setTitle(newVertexType);
         stage.setScene(scene);
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
+        
         stage.showAndWait();
         
         //return certain values depending on on newVertexType

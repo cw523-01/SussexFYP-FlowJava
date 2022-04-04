@@ -12,7 +12,6 @@ package flowjava;
  * @author cwood
  */
 public class UserCreatedExprException extends Exception{
-    
     /**
      * constructor for objects of class UserCreatedExprException
      * 

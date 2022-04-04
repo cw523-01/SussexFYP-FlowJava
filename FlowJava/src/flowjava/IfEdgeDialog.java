@@ -5,13 +5,17 @@
  */
 package flowjava;
 
+import java.net.URL;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -59,10 +63,17 @@ public class IfEdgeDialog {
         root.getChildren().addAll(promptTxt, btnsHbx);
         root.setPadding(new Insets(10, 50, 50, 50));
         
-        //instantiate and show scene
+        //instantiate scene
         Scene scene = new Scene(root, 400, 150);          
         stage.setTitle("If Statement Edge");
         stage.setScene(scene);
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
+        
         stage.showAndWait();
         
         //return input

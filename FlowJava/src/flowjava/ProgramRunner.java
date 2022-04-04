@@ -1079,7 +1079,7 @@ public class ProgramRunner {
         //if the compiler could not be retrived then the class cannot be run
         if (compiler == null){
             throw new RuntimeException("Could not get a compiler. "
-                    + "Please use a JDK when using this application: https://www.oracle.com/uk/java/technologies/javase/javase8-archive-downloads.html");
+                    + "Please use a JDK when using this application: https://www.guru99.com/install-java.html.\nAnd make sure you run the application from a CLI with Java, e.g. Command Prompt on a Windows system");
         }
         
         //retrive the file manager from the compiler

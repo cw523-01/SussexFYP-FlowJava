@@ -110,7 +110,6 @@ public class Flowchart implements Serializable {
      * @return true if vertex existed in the flowchart and was removed
      */
     public Boolean removeVertex(Vertex v){
-        
         return vertices.remove(v);
     }
     
@@ -196,7 +195,7 @@ public class Flowchart implements Serializable {
      * 
      * @param removedEdges edges to remove 
      */
-    void removeEdges(ArrayList<Edge> removedEdges) {
+    public void removeEdges(ArrayList<Edge> removedEdges) {
         //for each vertex remove all connections that contain a removed edge
         for(Vertex v: vertices){
             ArrayList<Pair<Edge,Boolean>> removedConnections = new ArrayList<>();

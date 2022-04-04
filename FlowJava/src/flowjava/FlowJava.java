@@ -1,10 +1,12 @@
 package flowjava;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
@@ -13,10 +15,12 @@ import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.HostServices;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -46,8 +50,11 @@ import javafx.scene.shape.Polyline;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Pair;
+import javax.imageio.ImageIO;
 import javax.script.ScriptException;
 
 /**
@@ -91,10 +98,10 @@ public class FlowJava extends Application {
 
     @Override
     public void start(Stage primaryStage) throws ScriptException, IOException {
-
+        
         //instantiate the program runner
         progRunner = new ProgramRunner();
-
+        
         //instantiate flowchart
         flowchart = new Flowchart();
 
@@ -128,24 +135,24 @@ public class FlowJava extends Application {
         toolbarHb.setSpacing(10);
 
         //set up the run image view for running created programs
-        File imgFile = new File("images/StartImg.png");
-        Image runImg = new Image(imgFile.toURI().toString());
+        URL imgURL = getClass().getResource("/images/StartImg.png");
+        Image runImg = new Image(imgURL.openStream());
         ImageView runImgView = new ImageView();
         runImgView.setPreserveRatio(true);
         runImgView.setFitHeight(75);
         runImgView.setImage(runImg);
 
         //set up the convert image view for converting created programs
-        imgFile = new File("images/ToJavaImg.png");
-        Image convertImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/ToJavaImg.png");
+        Image convertImg = new Image(imgURL.openStream());
         ImageView convertImgView = new ImageView();
         convertImgView.setPreserveRatio(true);
         convertImgView.setFitHeight(75);
         convertImgView.setImage(convertImg);
 
         //set up the halt image view for terminating a running program early
-        imgFile = new File("images/HaltImg.png");
-        Image haltImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/HaltImg.png");
+        Image haltImg = new Image(imgURL.openStream());
         ImageView haltImgView = new ImageView();
         haltImgView.setPreserveRatio(true);
         haltImgView.setFitHeight(75);
@@ -172,8 +179,8 @@ public class FlowJava extends Application {
         });
 
         //set up the functions image view for opening the functions manager dialog
-        imgFile = new File("images/FunctionsImg.png");
-        Image functionsImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/FunctionsImg.png");
+        Image functionsImg = new Image(imgURL.openStream());
         ImageView functionsImgView = new ImageView();
         functionsImgView.setPreserveRatio(true);
         functionsImgView.setFitHeight(75);
@@ -283,8 +290,8 @@ public class FlowJava extends Application {
         connectionBtn.setPrefSize(198, 50);
         
         //add icon for connections to connection button
-        imgFile = new File("images/ConnectionImg.png");
-        Image connectionImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/ConnectionImg.png");
+        Image connectionImg = new Image(imgURL.openStream());
         ImageView connectionImgView = new ImageView();
         connectionImgView.setPreserveRatio(true);
         connectionImgView.setFitHeight(30);
@@ -297,8 +304,8 @@ public class FlowJava extends Application {
         varDeclarationBtn.setPrefSize(198, 50);
         
         //add icon for I/O to button
-        imgFile = new File("images/IoImg.png");
-        Image IoImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/IoImg.png");
+        Image IoImg = new Image(imgURL.openStream());
         ImageView varDecImgView = new ImageView();
         varDecImgView.setPreserveRatio(true);
         varDecImgView.setFitHeight(30);
@@ -311,6 +318,7 @@ public class FlowJava extends Application {
         arrayDeclarationBtn.setTextAlignment(TextAlignment.CENTER);
         arrayDeclarationBtn.setPrefSize(198, 50);
 
+        
         //add icon for I/O to button
         ImageView arrVarDecImgView = new ImageView();
         arrVarDecImgView.setPreserveRatio(true);
@@ -349,8 +357,8 @@ public class FlowJava extends Application {
         varAssignmentBtn.setPrefSize(198, 50);
 
         //add icon for process to button
-        imgFile = new File("images/ProcessImg.png");
-        Image processImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/ProcessImg.png");
+        Image processImg = new Image(imgURL.openStream());
         ImageView varAssignImgView = new ImageView();
         varAssignImgView.setPreserveRatio(true);
         varAssignImgView.setFitHeight(30);
@@ -363,8 +371,8 @@ public class FlowJava extends Application {
         ifStmtBtn.setPrefSize(198, 50);
 
         //add icon for decision to button
-        imgFile = new File("images/DecisionImg.png");
-        Image decisionImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/ProcessImg.png");
+        Image decisionImg = new Image(imgURL.openStream());
         ImageView ifImgView = new ImageView();
         ifImgView.setPreserveRatio(true);
         ifImgView.setFitHeight(30);
@@ -401,8 +409,8 @@ public class FlowJava extends Application {
         functBtn.setPrefSize(198, 50);
 
         //add icon for invoke to button
-        imgFile = new File("images/InvokeImg.png");
-        Image invokeImg = new Image(imgFile.toURI().toString());
+        imgURL = getClass().getResource("/images/InvokeImg.png");
+        Image invokeImg = new Image(imgURL.openStream());
         ImageView invokeImgView = new ImageView();
         invokeImgView.setPreserveRatio(true);
         invokeImgView.setFitHeight(30);
@@ -488,9 +496,9 @@ public class FlowJava extends Application {
 
         userManualMenuitem.setOnAction(e -> {
             //open user manual file using default pdf viewer
-            File userManualFile = new File("user_manual/FlowJavaUserManual.pdf");
+            URL manualURL = getClass().getResource("/user_manual/FlowJavaUserManual.pdf");
             HostServices hostServices = getHostServices();
-            hostServices.showDocument(userManualFile.getAbsolutePath());
+            hostServices.showDocument(manualURL.toString());
         });
 
         //add menu items to help menu
@@ -1518,7 +1526,17 @@ public class FlowJava extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(1000);
         primaryStage.setMinHeight(800);
-        primaryStage.getIcons().add(new Image("file:images/LogoImg.png"));
+        imgURL = getClass().getResource("/images/LogoImg.png");
+        primaryStage.getIcons().add(new Image(imgURL.openStream()));
+        
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        primaryStage.setX(bounds.getMinX());
+        primaryStage.setY(bounds.getMinY());
+        primaryStage.setWidth(bounds.getWidth());
+        primaryStage.setHeight(bounds.getHeight());
+        primaryStage.setMaxWidth(bounds.getWidth() * 2);
+        
         primaryStage.show();
 
         //instantiate start vertex
@@ -1880,20 +1898,6 @@ public class FlowJava extends Application {
             flowchart.removeVar(vArrDecController.getVar());
         }
 
-        updateRSidebar();
-    }
-
-    /**
-     * delete a given edge
-     *
-     * @param e edge to be deleted
-     */
-    private void deleteEdge(Edge e) {
-        //remove edges view from the canvas
-        mainZc.getChildren().remove(e.getView());
-
-        //remove edge from flowchart
-        flowchart.removeEdge(e);
         updateRSidebar();
     }
 

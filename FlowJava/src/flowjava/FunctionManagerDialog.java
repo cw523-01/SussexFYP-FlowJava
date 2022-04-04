@@ -11,7 +11,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.LinkedList;
@@ -20,15 +22,18 @@ import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -115,10 +120,17 @@ public class FunctionManagerDialog {
         Stage stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
 
-        //instantiate and show scene
+        //instantiate scene
         Scene scene = new Scene(root, 600, 400);
         stage.setTitle("Function Manager");
         stage.setScene(scene);
+        URL imgURL = getClass().getResource("/images/LogoImg.png");
+        stage.getIcons().add(new Image(imgURL.toString()));
+        //ensure stage bounds are reasonable
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setMaxHeight(bounds.getHeight());
+        stage.setMaxWidth(bounds.getWidth());
+        
         stage.showAndWait();
 
         //return updated list
@@ -149,7 +161,8 @@ public class FunctionManagerDialog {
                     edgeViewsArchive = new ArrayList<>();
                     
                     //create ObjectOutputStream to archive serializable function data to a file
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream("data/function_archive.bin"));
+                    URL dataURL = getClass().getResource("/data/function_archive.bin");
+                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(dataURL.getFile()));
                     //write function f to the file
                     objectOutputStream.writeObject(f);
                     objectOutputStream.close();
@@ -203,7 +216,7 @@ public class FunctionManagerDialog {
                     } // else revert function back to archived version 
                     else {
                         //retrieve archived function from file and replace with current version in functions
-                        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream("data/function_archive.bin"));
+                        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(dataURL.getFile()));
                         functions.remove(f);
                         FunctionFlowchart archivedFf = (FunctionFlowchart) objectInputStream.readObject();
                         //reset the archived transient vertex data from f using the archive lists 
@@ -248,6 +261,7 @@ public class FunctionManagerDialog {
                 } catch (IOException ex) {
                     //alert users of issues encountered when archiving a function
                     showAlert(Alert.AlertType.ERROR, "Error when storing functions data!");
+                    System.out.println(Arrays.toString(ex.getStackTrace()));
                 } catch (ClassNotFoundException ex) {
                     //alert users of issues encountered when loading an archived a function
                     showAlert(Alert.AlertType.ERROR, "Error when loading functions data!");
