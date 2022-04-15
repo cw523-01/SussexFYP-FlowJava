@@ -146,26 +146,29 @@ public class CreateVertexDialog {
             //instantiate combo box for choosing how to enter value
             valCmbx = new ComboBox<>();
             valCmbx.setPromptText("Boolean Expression");
-            valCmbx.setItems(FXCollections.observableArrayList("Manual Expression", "Build Expression"));
+            valCmbx.setItems(FXCollections.observableArrayList("Enter Expression", "Expression Assistant"));
 
             //instantiate text field for typing a given value
             valueTxtFld = new TextField();
             valueTxtFld.setPromptText("Type Expression");
 
             valInputsHBox = new HBox();
-
+            valInputsHBox.getChildren().add(valueTxtFld);
+            
             valCmbx.setOnAction(e -> {
                 expr = "";
                 valInputsHBox.getChildren().clear();
                 switch (valCmbx.getValue()) {
-                    case "Manual Expression":
+                    case "Enter Expression":
                         valInputsHBox.getChildren().add(valueTxtFld);
                         break;
-                    case "Build Expression":
+                    case "Expression Assistant":
                         valInputsHBox.getChildren().add(createExprHbox);
                         break;
                 }
             });
+            
+            valCmbx.setValue("Enter Expression");
             
             //instantiate button for confirming input
             confirmBtn.setOnAction(e -> {
@@ -176,7 +179,7 @@ public class CreateVertexDialog {
                 }
                 //set expr based on input method
                 switch (valCmbx.getValue()) {
-                    case "Manual Expression":
+                    case "Enter Expression":
                         if (valueTxtFld.getText().isEmpty()) {
                             showAlert(Alert.AlertType.ERROR, "please specify the expression!");
                             return;
@@ -185,7 +188,7 @@ public class CreateVertexDialog {
                         valid = true;
                         break;
 
-                    case "Build Expression":
+                    case "Expression Assistant":
                         if (exprHbx == null) {
                             showAlert(Alert.AlertType.ERROR, "please create expression!");
                             return;
@@ -265,26 +268,29 @@ public class CreateVertexDialog {
             //instantiate combo box for choosing how to enter value
             valCmbx = new ComboBox<>();
             valCmbx.setPromptText("Value");
-            valCmbx.setItems(FXCollections.observableArrayList("Value/Manual Expression", "Build Expression"));
+            valCmbx.setItems(FXCollections.observableArrayList("Enter Expression", "Expression Assistant"));
 
             //instantiate text field for typing a given value
             valueTxtFld = new TextField();
             valueTxtFld.setPromptText("Value or Variable name");
             
             valInputsHBox = new HBox();
-
+            valInputsHBox.getChildren().add(valueTxtFld);
+            
             valCmbx.setOnAction(e -> {
                 val = "";
                 valInputsHBox.getChildren().clear();
                 switch (valCmbx.getValue()) {
-                    case "Value/Manual Expression":
+                    case "Enter Expression":
                         valInputsHBox.getChildren().add(valueTxtFld);
                         break;
-                    case "Build Expression":
+                    case "Expression Assistant":
                         valInputsHBox.getChildren().add(createExprHbox);
                         break;
                 }
             });
+            
+            valCmbx.setValue("Enter Expression");
             
             //instantiate button for confirming input
             confirmBtn.setOnAction(e -> {
@@ -294,7 +300,7 @@ public class CreateVertexDialog {
                     return;
                 }
                 switch (valCmbx.getValue()) {
-                    case "Value/Manual Expression":
+                    case "Enter Expression":
                         if (valueTxtFld.getText().isEmpty()) {
                             showAlert(Alert.AlertType.ERROR, "please specify the value!");
                             return;
@@ -303,7 +309,7 @@ public class CreateVertexDialog {
                         valid = true;
                         break;
 
-                    case "Build Expression":
+                    case "Expression Assistant":
                         if (exprHbx == null) {
                             showAlert(Alert.AlertType.ERROR, "please create expression!");
                             return;
@@ -389,26 +395,29 @@ public class CreateVertexDialog {
             //instantiate combo box for choosing how to enter value
             valCmbx = new ComboBox<>();
             valCmbx.setPromptText("Value");
-            valCmbx.setItems(FXCollections.observableArrayList("Given Value", "Expression"));
+            valCmbx.setItems(FXCollections.observableArrayList("Enter Expression", "Expression Assistant"));
 
             //instantiate text field for typing a given value
             valueTxtFld = new TextField();
             valueTxtFld.setPromptText("Value");
 
             valInputsHBox = new HBox();
+            valInputsHBox.getChildren().add(valueTxtFld);
 
             valCmbx.setOnAction(e -> {
                 val = "";
                 valInputsHBox.getChildren().clear();
                 switch (valCmbx.getValue()) {
-                    case "Given Value":
+                    case "Enter Expression":
                         valInputsHBox.getChildren().add(valueTxtFld);
                         break;
-                    case "Expression":
+                    case "Expression Assistant":
                         valInputsHBox.getChildren().add(createExprHbox);
                         break;
                 }
             });
+            
+            valCmbx.setValue("Enter Expression");
 
             //instantiate button for confirming input
             confirmBtn.setOnAction(e -> {
@@ -422,7 +431,7 @@ public class CreateVertexDialog {
                     return;
                 }
                 switch (valCmbx.getValue()) {
-                    case "Given Value":
+                    case "Enter Expression":
                         if (valueTxtFld.getText().isEmpty()) {
                             showAlert(Alert.AlertType.ERROR, "please specify the value!");
                             return;
@@ -432,7 +441,7 @@ public class CreateVertexDialog {
                         valid = true;
                         break;
 
-                    case "Expression":
+                    case "Expression Assistant":
                         if (exprHbx == null) {
                             showAlert(Alert.AlertType.ERROR, "please create expression!");
                             return;
@@ -485,28 +494,27 @@ public class CreateVertexDialog {
             //instantiate combo box for choosing how to enter value
             valCmbx = new ComboBox<>();
             valCmbx.setPromptText("Value");
-            valCmbx.setItems(FXCollections.observableArrayList("Given Value", "Manual Expression", "Build Expression"));
+            valCmbx.setItems(FXCollections.observableArrayList("Enter Expression", "Expression Assistant"));
 
             //instantiate text field for typing a given value
             valueTxtFld = new TextField();
+            valInputsHBox.getChildren().add(valueTxtFld);
+            valueTxtFld.setPromptText("Value");
 
             valCmbx.setOnAction(e -> {
                 val = "";
                 valInputsHBox.getChildren().clear();
                 switch (valCmbx.getValue()) {
-                    case "Manual Expression":
-                        valueTxtFld.setPromptText("Expression");
+                    case "Enter Expression":
                         valInputsHBox.getChildren().add(valueTxtFld);
                         break;
-                    case "Given Value":
-                        valueTxtFld.setPromptText("Value");
-                        valInputsHBox.getChildren().add(valueTxtFld);
-                        break;
-                    case "Build Expression":
+                    case "Expression Assistant":
                         valInputsHBox.getChildren().add(createExprHbox);
                         break;
                 }
             });
+            
+            valCmbx.setValue("Enter Expression");
             
             //instantiate button for confirming input
             confirmBtn.setOnAction(e -> {
@@ -523,7 +531,7 @@ public class CreateVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "please specify variable value!");
                 } else {
                     switch (valCmbx.getValue()) {
-                        case "Given Value":
+                        case "Enter Expression":
                             if (valueTxtFld.getText().isEmpty()) {
                                 showAlert(Alert.AlertType.ERROR, "please specify the value!");
                                 return;
@@ -534,7 +542,7 @@ public class CreateVertexDialog {
                             val = valueTxtFld.getText();
                             break;
 
-                        case "Build Expression":
+                        case "Expression Assistant":
                             if (exprHbx == null) {
                                 showAlert(Alert.AlertType.ERROR, "please create expression!");
                                 return;
@@ -542,18 +550,6 @@ public class CreateVertexDialog {
                             usingExpr = true;
                             String expr = exprHbx.getExprString();
                             val = expr;
-                            break;
-
-                        case "Manual Expression":
-                            if (valueTxtFld.getText().isEmpty()) {
-                                showAlert(Alert.AlertType.ERROR, "please specify the expression!");
-                                return;
-                            }
-                            usingExpr = true;
-                            if (exprHbx == null) {
-                                exprHbx = new ExpressionHBox(false);
-                            }
-                            val = valueTxtFld.getText();
                             break;
                     }
                     type = (VarType) typeCmbx.getValue();

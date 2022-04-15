@@ -112,8 +112,8 @@ public class CreateFunctionDialog {
         
         //set prompt texts for header input fields
         nameTxtFld.setPromptText("Function Name");
-        typeCmbx.setPromptText("Function Type");
-        returnTxtFld.setPromptText("Return Value/Expression");
+        typeCmbx.setPromptText("Data Type");
+        returnTxtFld.setPromptText("Value");
         
         stage.initModality(Modality.APPLICATION_MODAL);
         //initialise root
@@ -129,14 +129,14 @@ public class CreateFunctionDialog {
         HBox returnHbx = new HBox();
         returnHbx.setSpacing(10);
         returnHbx.setAlignment(Pos.CENTER_LEFT);
-        returnHbx.getChildren().addAll(new Text("Return: "), returnTxtFld);
+        returnHbx.getChildren().addAll(new Text("Return Expression: "), returnTxtFld);
         
         //assemble header UI components
         headersHbx = new HBox();
         headersHbx.setPadding(new Insets(0,5,0,5));
         headersHbx.setSpacing(10);
         headersHbx.setAlignment(Pos.CENTER_LEFT);
-        headersHbx.getChildren().addAll(new Text("Function Type: "), typeCmbx, new Text("Function Name: "), nameTxtFld, returnHbx);
+        headersHbx.getChildren().addAll(new Text("Function Name: "), nameTxtFld, new Text("Function Return Type: "), typeCmbx, returnHbx);
         headersHbx.setStyle("-fx-border-style: solid inside;"
         + "-fx-border-width: 2;" + "-fx-border-color: lightgrey;");
         
@@ -147,7 +147,7 @@ public class CreateFunctionDialog {
                 case "VOID":
                     break;
                 default:
-                    returnHbx.getChildren().addAll(new Text("Return: "), returnTxtFld);
+                    returnHbx.getChildren().addAll(new Text("Return Expression: "), returnTxtFld);
                     break;
             }
         });
@@ -243,6 +243,7 @@ public class CreateFunctionDialog {
         paramContainerVb.getChildren().addAll(paramSp, canvasHb);
         mainControlsHb.getChildren().addAll(paramContainerVb, rightSidebarSp);
         root.getChildren().addAll(headersHbx, mainControlsHb, footersHbx);
+        HBox.setHgrow(paramContainerVb, Priority.ALWAYS);
         
         //instantiate and show scene
         Scene scene = new Scene(root, 400, 200);
@@ -617,6 +618,8 @@ public class CreateFunctionDialog {
         connectionBtn.setOnAction(e -> {
             resetCanvasSize();
             
+            canvasSp.setCursor(Cursor.CROSSHAIR);
+            
             //deselect any currently selected node
             deselectComponent();
             //set chosen parent to null
@@ -639,12 +642,12 @@ public class CreateFunctionDialog {
         varDeclarationBtn.setPrefSize(198, 50);
         
         //add icon for I/O to button
-        imgURL = getClass().getResource("/images/IoImg.png");
-        Image IoImg = new Image(imgURL.toString());
+        imgURL = getClass().getResource("/images/VarDecImg.png");
+        Image varDecImg = new Image(imgURL.toString());
         ImageView varDecImgView = new ImageView();
         varDecImgView.setPreserveRatio(true);
         varDecImgView.setFitHeight(30);
-        varDecImgView.setImage(IoImg);
+        varDecImgView.setImage(varDecImg);
         varDeclarationBtn.setGraphic(varDecImgView);
         varDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -658,8 +661,8 @@ public class CreateFunctionDialog {
                                          155.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String varDecDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String varDecSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String varDecDefStyle = "-fx-fill: lightcyan; -fx-stroke: black; -fx-stroke-width: 2;";
+            String varDecSelStyle = "-fx-fill: lightcyan; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newVarDeclaration = new Vertex(new VarDecController(), parallelogram, varDecDefStyle, varDecSelStyle);
@@ -721,7 +724,9 @@ public class CreateFunctionDialog {
         ImageView userIntoVarImgView = new ImageView();
         userIntoVarImgView.setPreserveRatio(true);
         userIntoVarImgView.setFitHeight(30);
-        userIntoVarImgView.setImage(IoImg);
+        imgURL = getClass().getResource("/images/UserInImg.png");
+        Image userInImg = new Image(imgURL.toString());
+        userIntoVarImgView.setImage(userInImg);
         userInToVarBtn.setGraphic(userIntoVarImgView);
         userInToVarBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -734,8 +739,8 @@ public class CreateFunctionDialog {
                                          155.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String userInDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String userInSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String userInDefStyle = "-fx-fill: lightsalmon; -fx-stroke: black; -fx-stroke-width: 2;";
+            String userInSelStyle = "-fx-fill: lightsalmon; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newUserInToVar = new Vertex(new UserInToVarController(), parallelogram, userInDefStyle, userInSelStyle);
@@ -796,7 +801,9 @@ public class CreateFunctionDialog {
         ImageView outputImgView = new ImageView();
         outputImgView.setPreserveRatio(true);
         outputImgView.setFitHeight(30);
-        outputImgView.setImage(IoImg);
+        imgURL = getClass().getResource("/images/OutputImg.png");
+        Image outputImg = new Image(imgURL.toString());
+        outputImgView.setImage(outputImg);
         outputBtn.setGraphic(outputImgView);
         outputBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -809,8 +816,8 @@ public class CreateFunctionDialog {
                                          155.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String outputDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String outputSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String outputDefStyle =  "-fx-fill: moccasin; -fx-stroke: black; -fx-stroke-width: 2;";
+            String outputSelStyle = "-fx-fill: moccasin; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newOutput = new Vertex(new OutputController(), parallelogram, outputDefStyle, outputSelStyle);
@@ -855,7 +862,7 @@ public class CreateFunctionDialog {
         varAssignmentBtn.setPrefSize(198, 50);
         
         //add icon for process to button
-        imgURL = getClass().getResource("/images/ProcessImg.png");
+        imgURL = getClass().getResource("/images/VarAssignImg.png");
         Image processImg = new Image(imgURL.toString());
         ImageView varAssignImgView = new ImageView();
         varAssignImgView.setPreserveRatio(true);
@@ -873,8 +880,8 @@ public class CreateFunctionDialog {
                                          185.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String varAssignDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String varAssignSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String varAssignDefStyle = "-fx-fill: lightsteelblue; -fx-stroke: black; -fx-stroke-width: 2;";
+            String varAssignSelStyle = "-fx-fill: lightsteelblue; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newVarAssign = new Vertex(new VarAssignController(), rectangle, varAssignDefStyle, varAssignSelStyle);
@@ -921,12 +928,12 @@ public class CreateFunctionDialog {
         ifStmtBtn.setPrefSize(198, 50);
         
         //add icon for decision to button
-        imgURL = getClass().getResource("/images/DecisionImg.png");
-        Image decisionImg = new Image(imgURL.toString());
+        imgURL = getClass().getResource("/images/IfStmtImg.png");
+        Image ifStmtImg = new Image(imgURL.toString());
         ImageView ifImgView = new ImageView();
         ifImgView.setPreserveRatio(true);
         ifImgView.setFitHeight(30);
-        ifImgView.setImage(decisionImg);
+        ifImgView.setImage(ifStmtImg);
         ifStmtBtn.setGraphic(ifImgView);
         ifStmtBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -943,8 +950,8 @@ public class CreateFunctionDialog {
                                          75.00, 35.0, 0.0, 35.0);
             
             //instantiate strings for different view styles
-            String ifStmtDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String ifStmtSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String ifStmtDefStyle = "-fx-fill: lavenderblush; -fx-stroke: black; -fx-stroke-width: 2;";
+            String ifStmtSelStyle = "-fx-fill: lavenderblush; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newIfStmt = new Vertex(new IfStmtController(), ifDiamond, ifStmtDefStyle, ifStmtSelStyle, true);
@@ -1038,7 +1045,9 @@ public class CreateFunctionDialog {
         ImageView whileImgView = new ImageView();
         whileImgView.setPreserveRatio(true);
         whileImgView.setFitHeight(30);
-        whileImgView.setImage(decisionImg);
+        imgURL = getClass().getResource("/images/WhileImg.png");
+        Image whileImg = new Image(imgURL.toString());
+        whileImgView.setImage(whileImg);
         whileBtn.setGraphic(whileImgView);
         whileBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1055,9 +1064,8 @@ public class CreateFunctionDialog {
                                          75.00, 35.0, 0.0, 35.0);
             
             //instantiate strings for different view styles
-            String whileDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String whileSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
-            
+            String whileDefStyle = "-fx-fill: antiquewhite; -fx-stroke: black; -fx-stroke-width: 2;";
+            String whileSelStyle = "-fx-fill: antiquewhite; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newWhile = new Vertex(new WhileController(), whileDiamond, whileDefStyle, whileSelStyle, false);
@@ -1148,7 +1156,7 @@ public class CreateFunctionDialog {
         functBtn.setTextAlignment(TextAlignment.CENTER);
         
         //add icon for invoke to button
-        imgURL = getClass().getResource("/images/InvokeImg.png");
+        imgURL = getClass().getResource("/images/FunctInvokeImg.png");
         Image invokeImg = new Image(imgURL.toString());
         ImageView invokeImgView = new ImageView();
         invokeImgView.setPreserveRatio(true);
@@ -1175,8 +1183,8 @@ public class CreateFunctionDialog {
                                          185.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String functDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String functSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String functDefStyle = "-fx-fill: lavender; -fx-stroke: black; -fx-stroke-width: 2;";
+            String functSelStyle = "-fx-fill: lavender; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newFunctInvoke = new Vertex(new FunctInvokeController(), barredRectangle, functDefStyle, functSelStyle);
@@ -1225,7 +1233,9 @@ public class CreateFunctionDialog {
         ImageView recurseImgView = new ImageView();
         recurseImgView.setPreserveRatio(true);
         recurseImgView.setFitHeight(30);
-        recurseImgView.setImage(invokeImg);
+        imgURL = getClass().getResource("/images/RecurseImg.png");
+        Image recurseImg = new Image(imgURL.toString());
+        recurseImgView.setImage(recurseImg);
         recurseBtn.setGraphic(recurseImgView);
         recurseBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1242,8 +1252,8 @@ public class CreateFunctionDialog {
                                          185.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String functDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String functSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String functDefStyle = "-fx-fill: mistyrose; -fx-stroke: black; -fx-stroke-width: 2;";
+            String functSelStyle = "-fx-fill: mistyrose; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newRecurse = new Vertex(new RecurseController(), barredRectangle, functDefStyle, functSelStyle);
@@ -1293,7 +1303,9 @@ public class CreateFunctionDialog {
         ImageView arrVarDecImgView = new ImageView();
         arrVarDecImgView.setPreserveRatio(true);
         arrVarDecImgView.setFitHeight(30);
-        arrVarDecImgView.setImage(IoImg);
+        imgURL = getClass().getResource("/images/ArrDecImg.png");
+        Image arrVarDecImg = new Image(imgURL.toString());
+        arrVarDecImgView.setImage(arrVarDecImg);
         arrayDeclarationBtn.setGraphic(arrVarDecImgView);
         arrayDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1306,8 +1318,8 @@ public class CreateFunctionDialog {
                                          155.00, 70.0, 0.0, 70.0);
             
             //instantiate strings for different view styles
-            String arrDecDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String arrDecSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String arrDecDefStyle = "-fx-fill: plum; -fx-stroke: black; -fx-stroke-width: 2;";
+            String arrDecSelStyle = "-fx-fill: plum; -fx-stroke: red; -fx-stroke-width: 2;";
             
             //instantiate Vertex model view and controller
             Vertex newArrDeclaration = new Vertex(new ArrayDecController(), parallelogram, arrDecDefStyle, arrDecSelStyle);
@@ -1368,7 +1380,9 @@ public class CreateFunctionDialog {
         ImageView forImgView = new ImageView();
         forImgView.setPreserveRatio(true);
         forImgView.setFitHeight(30);
-        forImgView.setImage(decisionImg);
+        imgURL = getClass().getResource("/images/ForImg.png");
+        Image forImg = new Image(imgURL.toString());
+        forImgView.setImage(forImg);
         forBtn.setGraphic(forImgView);
         forBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -1385,8 +1399,8 @@ public class CreateFunctionDialog {
                                          75.00, 35.0, 0.0, 35.0);
             
             //instantiate strings for different view styles
-            String forDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String forSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String forDefStyle = "-fx-fill: aquamarine; -fx-stroke: black; -fx-stroke-width: 2;";
+            String forSelStyle = "-fx-fill: aquamarine; -fx-stroke: red; -fx-stroke-width: 2;";
             
             
             //instantiate Vertex model view and controller
@@ -1570,6 +1584,7 @@ public class CreateFunctionDialog {
             nameTxtFld.setText(fFlowchart.getName());
             if(fFlowchart.getReturnType() == null){
                 typeCmbx.setValue("VOID");
+                returnHbx.getChildren().clear();
             } else {
                 typeCmbx.setValue(fFlowchart.getReturnType().toString());
             }
@@ -1643,6 +1658,8 @@ public class CreateFunctionDialog {
         
         //ensure stage bounds are reasonable
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        stage.setHeight(bounds.getHeight() - bounds.getHeight()/100);
+        stage.setWidth(bounds.getWidth() - bounds.getWidth()/100);
         stage.setMaxHeight(bounds.getHeight());
         stage.setMaxWidth(bounds.getWidth());
         
@@ -1735,7 +1752,12 @@ public class CreateFunctionDialog {
                     deselectComponent();
                     return;
                 }
+            } // edit vertex on double click 
+            else if (e.getClickCount() >= 2) {
+                editVertexBtn.fire();
+                vView.setOpacity(1);
             }
+            
             //deselect previous component
             deselectComponent();
             //select this component
@@ -1760,7 +1782,6 @@ public class CreateFunctionDialog {
             if (chosenParent == null) {
                 //initiate connection with clicked node as parent
                 chosenParent = v;
-                canvasSp.setCursor(Cursor.CROSSHAIR);
             } else if (!chosenParent.equals(v)) {
                 if(chosenParent.getController().getMaxChildren()!=chosenParent.getChildVertices().size() &&
                         v.getController().getMaxParents() != v.getParentVertices().size()){

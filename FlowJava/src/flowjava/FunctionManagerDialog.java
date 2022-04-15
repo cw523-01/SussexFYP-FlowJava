@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -161,8 +164,9 @@ public class FunctionManagerDialog {
                     edgeViewsArchive = new ArrayList<>();
                     
                     //create ObjectOutputStream to archive serializable function data to a file
-                    URL dataURL = getClass().getResource("/data/function_archive.bin");
-                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(dataURL.getFile()));
+                    Path tmp = Files.createTempFile("function_archive-", ".bin");
+                    Files.copy(getClass().getResourceAsStream("/data/function_archive.bin"), tmp, StandardCopyOption.REPLACE_EXISTING);
+                    ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(tmp.toFile()));
                     //write function f to the file
                     objectOutputStream.writeObject(f);
                     objectOutputStream.close();
@@ -216,7 +220,7 @@ public class FunctionManagerDialog {
                     } // else revert function back to archived version 
                     else {
                         //retrieve archived function from file and replace with current version in functions
-                        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(dataURL.getFile()));
+                        ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(tmp.toFile()));
                         functions.remove(f);
                         FunctionFlowchart archivedFf = (FunctionFlowchart) objectInputStream.readObject();
                         //reset the archived transient vertex data from f using the archive lists 

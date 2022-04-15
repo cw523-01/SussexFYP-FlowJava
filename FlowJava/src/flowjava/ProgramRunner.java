@@ -1135,7 +1135,6 @@ public class ProgramRunner {
             if(run){
                 //invoke the created unkown class
                 clarse.getMethod(methodName).invoke(clarse.newInstance());
-                
             }
             
         } catch(ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | NullPointerException x){

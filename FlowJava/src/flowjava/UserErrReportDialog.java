@@ -70,7 +70,7 @@ public class UserErrReportDialog {
         
         //instantiate scene
         Scene scene = new Scene(root, 600, 400);          
-        stage.setTitle("User Created Expression Error Report");
+        stage.setTitle("User Program Error Report");
         stage.setScene(scene);
         URL imgURL = getClass().getResource("/images/LogoImg.png");
         stage.getIcons().add(new Image(imgURL.toString()));

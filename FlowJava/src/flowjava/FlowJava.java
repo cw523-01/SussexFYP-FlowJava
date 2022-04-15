@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
@@ -66,7 +69,6 @@ import javax.script.ScriptException;
  * @author cwood
  */
 public class FlowJava extends Application {
-
     //boolean for whether the user is currently making a connection between two nodes
     private Boolean makingConnection = false;
     //stores which ever node the user currently has selected 
@@ -304,12 +306,12 @@ public class FlowJava extends Application {
         varDeclarationBtn.setPrefSize(198, 50);
         
         //add icon for I/O to button
-        imgURL = getClass().getResource("/images/IoImg.png");
-        Image IoImg = new Image(imgURL.openStream());
+        imgURL = getClass().getResource("/images/VarDecImg.png");
+        Image varDecImg = new Image(imgURL.openStream());
         ImageView varDecImgView = new ImageView();
         varDecImgView.setPreserveRatio(true);
         varDecImgView.setFitHeight(30);
-        varDecImgView.setImage(IoImg);
+        varDecImgView.setImage(varDecImg);
         varDeclarationBtn.setGraphic(varDecImgView);
         varDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
         
@@ -320,10 +322,12 @@ public class FlowJava extends Application {
 
         
         //add icon for I/O to button
+        imgURL = getClass().getResource("/images/ArrDecImg.png");
+        Image arrVarDecImg = new Image(imgURL.openStream());
         ImageView arrVarDecImgView = new ImageView();
         arrVarDecImgView.setPreserveRatio(true);
         arrVarDecImgView.setFitHeight(30);
-        arrVarDecImgView.setImage(IoImg);
+        arrVarDecImgView.setImage(arrVarDecImg);
         arrayDeclarationBtn.setGraphic(arrVarDecImgView);
         arrayDeclarationBtn.setContentDisplay(ContentDisplay.RIGHT);
 
@@ -333,10 +337,12 @@ public class FlowJava extends Application {
         userInToVarBtn.setTextAlignment(TextAlignment.CENTER);
 
         //add icon for I/O to button
+        imgURL = getClass().getResource("/images/UserInImg.png");
+        Image userInImg = new Image(imgURL.openStream());
         ImageView userIntoVarImgView = new ImageView();
         userIntoVarImgView.setPreserveRatio(true);
         userIntoVarImgView.setFitHeight(30);
-        userIntoVarImgView.setImage(IoImg);
+        userIntoVarImgView.setImage(userInImg);
         userInToVarBtn.setGraphic(userIntoVarImgView);
         userInToVarBtn.setContentDisplay(ContentDisplay.RIGHT);
 
@@ -345,10 +351,12 @@ public class FlowJava extends Application {
         outputBtn.setPrefSize(198, 50);
 
         //add icon for I/O to button
+        imgURL = getClass().getResource("/images/OutputImg.png");
+        Image outputImg = new Image(imgURL.openStream());
         ImageView outputImgView = new ImageView();
         outputImgView.setPreserveRatio(true);
         outputImgView.setFitHeight(30);
-        outputImgView.setImage(IoImg);
+        outputImgView.setImage(outputImg);
         outputBtn.setGraphic(outputImgView);
         outputBtn.setContentDisplay(ContentDisplay.RIGHT);
 
@@ -357,7 +365,7 @@ public class FlowJava extends Application {
         varAssignmentBtn.setPrefSize(198, 50);
 
         //add icon for process to button
-        imgURL = getClass().getResource("/images/ProcessImg.png");
+        imgURL = getClass().getResource("/images/VarAssignImg.png");
         Image processImg = new Image(imgURL.openStream());
         ImageView varAssignImgView = new ImageView();
         varAssignImgView.setPreserveRatio(true);
@@ -371,12 +379,12 @@ public class FlowJava extends Application {
         ifStmtBtn.setPrefSize(198, 50);
 
         //add icon for decision to button
-        imgURL = getClass().getResource("/images/ProcessImg.png");
-        Image decisionImg = new Image(imgURL.openStream());
+        imgURL = getClass().getResource("/images/IfStmtImg.png");
+        Image ifStmtImg = new Image(imgURL.openStream());
         ImageView ifImgView = new ImageView();
         ifImgView.setPreserveRatio(true);
         ifImgView.setFitHeight(30);
-        ifImgView.setImage(decisionImg);
+        ifImgView.setImage(ifStmtImg);
         ifStmtBtn.setGraphic(ifImgView);
         ifStmtBtn.setContentDisplay(ContentDisplay.RIGHT);
 
@@ -385,10 +393,12 @@ public class FlowJava extends Application {
         whileBtn.setPrefSize(198, 50);
 
         //add icon for decision to button
+        imgURL = getClass().getResource("/images/WhileImg.png");
+        Image whileImg = new Image(imgURL.openStream());
         ImageView whileImgView = new ImageView();
         whileImgView.setPreserveRatio(true);
         whileImgView.setFitHeight(30);
-        whileImgView.setImage(decisionImg);
+        whileImgView.setImage(whileImg);
         whileBtn.setGraphic(whileImgView);
         whileBtn.setContentDisplay(ContentDisplay.RIGHT);
 
@@ -397,10 +407,12 @@ public class FlowJava extends Application {
         forBtn.setPrefSize(198, 50);
 
         //add icon for decision to button
+        imgURL = getClass().getResource("/images/ForImg.png");
+        Image forImg = new Image(imgURL.openStream());
         ImageView forImgView = new ImageView();
         forImgView.setPreserveRatio(true);
         forImgView.setFitHeight(30);
-        forImgView.setImage(decisionImg);
+        forImgView.setImage(forImg);
         forBtn.setGraphic(forImgView);
         forBtn.setContentDisplay(ContentDisplay.RIGHT);
 
@@ -409,7 +421,7 @@ public class FlowJava extends Application {
         functBtn.setPrefSize(198, 50);
 
         //add icon for invoke to button
-        imgURL = getClass().getResource("/images/InvokeImg.png");
+        imgURL = getClass().getResource("/images/FunctInvokeImg.png");
         Image invokeImg = new Image(imgURL.openStream());
         ImageView invokeImgView = new ImageView();
         invokeImgView.setPreserveRatio(true);
@@ -496,9 +508,15 @@ public class FlowJava extends Application {
 
         userManualMenuitem.setOnAction(e -> {
             //open user manual file using default pdf viewer
-            URL manualURL = getClass().getResource("/user_manual/FlowJavaUserManual.pdf");
-            HostServices hostServices = getHostServices();
-            hostServices.showDocument(manualURL.toString());
+            try {
+                Path tmp = Files.createTempFile("FlowJavaUserManual-", ".pdf");
+                Files.copy(getClass().getResourceAsStream("/user_manual/FlowJavaUserManual.pdf"), tmp, StandardCopyOption.REPLACE_EXISTING);
+                HostServices hostServices = getHostServices();
+                hostServices.showDocument(tmp.toString());
+                tmp.toFile().deleteOnExit();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         });
 
         //add menu items to help menu
@@ -537,8 +555,8 @@ public class FlowJava extends Application {
                     155.00, 70.0, 0.0, 70.0);
 
             //instantiate strings for different view styles
-            String varDecDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String varDecSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String varDecDefStyle = "-fx-fill: lightcyan; -fx-stroke: black; -fx-stroke-width: 2;";
+            String varDecSelStyle = "-fx-fill: lightcyan; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newVarDeclaration = new Vertex(new VarDecController(), parallelogram, varDecDefStyle, varDecSelStyle);
@@ -600,8 +618,8 @@ public class FlowJava extends Application {
                     155.00, 70.0, 0.0, 70.0);
 
             //instantiate strings for different view styles
-            String userInDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String userInSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String userInDefStyle = "-fx-fill: lightsalmon; -fx-stroke: black; -fx-stroke-width: 2;";
+            String userInSelStyle = "-fx-fill: lightsalmon; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newUserInToVar = new Vertex(new UserInToVarController(), parallelogram, userInDefStyle, userInSelStyle);
@@ -662,8 +680,8 @@ public class FlowJava extends Application {
                     155.00, 70.0, 0.0, 70.0);
 
             //instantiate strings for different view styles
-            String outputDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String outputSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String outputDefStyle = "-fx-fill: moccasin; -fx-stroke: black; -fx-stroke-width: 2;";
+            String outputSelStyle = "-fx-fill: moccasin; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newOutput = new Vertex(new OutputController(), parallelogram, outputDefStyle, outputSelStyle);
@@ -711,8 +729,8 @@ public class FlowJava extends Application {
                     185.00, 70.0, 0.0, 70.0);
 
             //instantiate strings for different view styles
-            String varAssignDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String varAssignSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String varAssignDefStyle = "-fx-fill: lightsteelblue; -fx-stroke: black; -fx-stroke-width: 2;";
+            String varAssignSelStyle = "-fx-fill: lightsteelblue; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newVarAssign = new Vertex(new VarAssignController(), rectangle, varAssignDefStyle, varAssignSelStyle);
@@ -766,8 +784,8 @@ public class FlowJava extends Application {
                     75.00, 35.0, 0.0, 35.0);
 
             //instantiate strings for different view styles
-            String ifStmtDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String ifStmtSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String ifStmtDefStyle = "-fx-fill: lavenderblush; -fx-stroke: black; -fx-stroke-width: 2;";
+            String ifStmtSelStyle = "-fx-fill: lavenderblush; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate vertex model view and controller
             Vertex newIfStmt = new Vertex(new IfStmtController(), ifDiamond, ifStmtDefStyle, ifStmtSelStyle, true);
@@ -868,8 +886,8 @@ public class FlowJava extends Application {
                     75.00, 35.0, 0.0, 35.0);
 
             //instantiate strings for different view styles
-            String whileDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String whileSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String whileDefStyle = "-fx-fill: antiquewhite; -fx-stroke: black; -fx-stroke-width: 2;";
+            String whileSelStyle = "-fx-fill: antiquewhite; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newWhile = new Vertex(new WhileController(), whileDiamond, whileDefStyle, whileSelStyle, false);
@@ -968,8 +986,8 @@ public class FlowJava extends Application {
                     75.00, 35.0, 0.0, 35.0);
 
             //instantiate strings for different view styles
-            String forDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String forSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String forDefStyle = "-fx-fill: aquamarine; -fx-stroke: black; -fx-stroke-width: 2;";
+            String forSelStyle = "-fx-fill: aquamarine; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newFor = new Vertex(new ForLoopController(), forDiamond, forDefStyle, forSelStyle, false);
@@ -1074,8 +1092,8 @@ public class FlowJava extends Application {
                     185.00, 70.0, 0.0, 70.0);
 
             //instantiate strings for different view styles
-            String functDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String functSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String functDefStyle = "-fx-fill: lavender; -fx-stroke: black; -fx-stroke-width: 2;";
+            String functSelStyle = "-fx-fill: lavender; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newFunctInvoke = new Vertex(new FunctInvokeController(), barredRectangle, functDefStyle, functSelStyle);
@@ -1125,8 +1143,8 @@ public class FlowJava extends Application {
                     155.00, 70.0, 0.0, 70.0);
 
             //instantiate strings for different view styles
-            String arrDecDefStyle = "-fx-fill: white; -fx-stroke: black; -fx-stroke-width: 2;";
-            String arrDecSelStyle = "-fx-fill: white; -fx-stroke: red; -fx-stroke-width: 2;";
+            String arrDecDefStyle = "-fx-fill: plum; -fx-stroke: black; -fx-stroke-width: 2;";
+            String arrDecSelStyle = "-fx-fill: plum; -fx-stroke: red; -fx-stroke-width: 2;";
 
             //instantiate Vertex model view and controller
             Vertex newArrDeclaration = new Vertex(new ArrayDecController(), parallelogram, arrDecDefStyle, arrDecSelStyle);
@@ -1173,7 +1191,7 @@ public class FlowJava extends Application {
                     label = label.substring(0, 15) + "...";
                 }
                 newArrDeclaration.getView().updateLabel(label);
-
+                
                 showAlert(Alert.AlertType.INFORMATION, "array created, you can access or modify array elements in expressions using "
                         + newArrDecController.getName() + "[~element index~]");
             }
@@ -1182,6 +1200,7 @@ public class FlowJava extends Application {
         //set event handler for new connection button
         connectionBtn.setOnAction(e -> {
             resetCanvasSize();
+            canvasSp.setCursor(Cursor.CROSSHAIR);
 
             //deselect any currently selected node
             deselectComponent();
@@ -1526,6 +1545,7 @@ public class FlowJava extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMinWidth(1000);
         primaryStage.setMinHeight(800);
+        primaryStage.setTitle("FlowJava");
         imgURL = getClass().getResource("/images/LogoImg.png");
         primaryStage.getIcons().add(new Image(imgURL.openStream()));
         
@@ -1611,7 +1631,6 @@ public class FlowJava extends Application {
             if (chosenParent == null) {
                 //initiate connection with clicked node as parent
                 chosenParent = v;
-                canvasSp.setCursor(Cursor.CROSSHAIR);
             } else if (!chosenParent.equals(v)) {
                 //if connection is valid
                 if (chosenParent.getController().getMaxChildren() != chosenParent.getChildVertices().size()
@@ -1745,6 +1764,10 @@ public class FlowJava extends Application {
                     deselectComponent();
                     return;
                 }
+            } //edit vertex on double click 
+            else if (e.getClickCount() >= 2){
+                editVertexBtn.fire();
+                vView.setOpacity(1);
             }
             //deselect previous component
             deselectComponent();
