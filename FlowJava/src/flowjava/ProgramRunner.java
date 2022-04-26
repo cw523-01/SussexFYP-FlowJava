@@ -60,7 +60,7 @@ public class ProgramRunner {
     //how many tabs should be inserted before each line of code during code conversion
     private int tabIndex;
     //unknown class for user created programs, run using reflection
-    private Class<?> clarse;
+    private Class<?> userProgClass;
     //standarf java file manager for the compiler used to compile user created programs
     private StandardJavaFileManager sfm;
     //semaphore for controlling thread execution order
@@ -1121,7 +1121,7 @@ public class ProgramRunner {
         semaphore.release();
         try{
             //load the created unkown class for invokation
-            clarse = new ClassLoader(){
+            userProgClass = new ClassLoader(){
                 @Override
                 public Class<?> findClass(String name){
                     if (!name.startsWith(className)){
@@ -1134,7 +1134,7 @@ public class ProgramRunner {
             
             if(run){
                 //invoke the created unkown class
-                clarse.getMethod(methodName).invoke(clarse.newInstance());
+                userProgClass.getMethod(methodName).invoke(userProgClass.newInstance());
             }
             
         } catch(ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException | NullPointerException x){
@@ -1167,7 +1167,7 @@ public class ProgramRunner {
      */
     public void stopRun(){
         try {
-            clarse.getMethod("cancelRun").invoke(sfm, new Object[0]);
+            userProgClass.getMethod("cancelRun").invoke(sfm, new Object[0]);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
             throw new RuntimeException("Run failed: " + ex, ex);
         }

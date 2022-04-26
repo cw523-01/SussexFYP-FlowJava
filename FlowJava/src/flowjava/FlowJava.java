@@ -1171,6 +1171,8 @@ public class FlowJava extends Application {
                 newArrDecController.setType((VarType) dialogResults[0]);
                 newArrDecController.setName((String) dialogResults[1]);
                 newArrDecController.setValues((String) dialogResults[2]);
+                newArrDecController.setLen((String) dialogResults[2]);
+                newArrDecController.setDeclaredByValues((Boolean) dialogResults[3]);
 
                 //set up vertex
                 setUpNewVertex(newArrDeclaration);
@@ -1501,7 +1503,7 @@ public class FlowJava extends Application {
                 ArrayDecController currArrDec = (ArrayDecController) currentController;
                 ArrayList<Var> currVars = flowchart.getVariables();
                 currVars.remove(currArrDec.getVar());
-                Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues()});
+                Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues(), currArrDec.isDeclaredByValues()});
 
                 boolean valuesNotNull = true;
                 int i = 0;
@@ -1520,6 +1522,8 @@ public class FlowJava extends Application {
                     currArrDec.setType((VarType) dialogResults[0]);
                     currArrDec.setName((String) dialogResults[1]);
                     currArrDec.setValues((String) dialogResults[2]);
+                    currArrDec.setLen((String) dialogResults[2]);
+                    currArrDec.setDeclaredByValues((Boolean) dialogResults[3]);
 
                     //update variable in flowchart
                     Var newVar = flowchart.addVar(currArrDec.getType(), currArrDec.getName(), "");

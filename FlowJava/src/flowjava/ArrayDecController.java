@@ -15,6 +15,10 @@ public class ArrayDecController extends VertexController{
     private VarType type;
     //name of the array
     private String name;
+    //boolean for whether to declare the array by its lenght or element values
+    private boolean declaredByValues;
+    //the expression for the length of the array
+    private String len;
     //the expression for the values of the array
     private String values;
     //the variable to hold the array
@@ -76,8 +80,53 @@ public class ArrayDecController extends VertexController{
     
     @Override
     public String getVertexLabel() {
-        return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + " array " + name + " = " + values; 
+        if(declaredByValues){
+            return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + " array " + name + " = " + values;
+        } else {
+            return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + " array " + name 
+                    + " = new empty array of length " + len;
+        }
     }
+
+    /**
+     * getter for whether the array is declared by a set of values
+     * (declared by length if false)
+     * 
+     * @return whether the array is declared by a set of values
+     */
+    public boolean isDeclaredByValues() {
+        return declaredByValues;
+    }
+
+    /**
+     * setter for whether the array is declared by a set of values
+     * (false for declared by length)
+     * 
+     * @param declaredByValues whether the array is declared by a set of values
+     */
+    public void setDeclaredByValues(boolean declaredByValues) {
+        this.declaredByValues = declaredByValues;
+    }
+
+    /**
+     * getter for expression for the length
+     * 
+     * @return length
+     */
+    public String getLen() {
+        return len;
+    }
+
+    /**
+     * setter for expression for the length
+     * 
+     * @param len new value for length
+     */
+    public void setLen(String len) {
+        this.len = len;
+    }
+    
+    
 
     @Override
     public Integer getMaxChildren() {
@@ -109,7 +158,12 @@ public class ArrayDecController extends VertexController{
 
     @Override
     public String getJavaDescription() {
-        return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + "[] " + name + " = {" + values + "};";
+        if(declaredByValues){
+            return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + "[] " + name + " = {" + values + "};";
+        }
+        else{
+            return type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + "[] " + name 
+                + " = new " + type.toString().substring(0, 1)+ type.toString().substring(1).toLowerCase() + "[" + len + "];";
+        }
     }
-    
 }

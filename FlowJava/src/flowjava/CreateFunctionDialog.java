@@ -560,7 +560,7 @@ public class CreateFunctionDialog {
                 ArrayDecController currArrDec = (ArrayDecController) currentController;
                 ArrayList<Var> currVars = fFlowchart.getVariables();
                 currVars.remove(currArrDec.getVar());
-                Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues()});
+                Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues(), currArrDec.isDeclaredByValues()});
 
                 boolean valuesNotNull = true;
                 int i = 0;
@@ -579,6 +579,8 @@ public class CreateFunctionDialog {
                     currArrDec.setType((VarType) dialogResults[0]);
                     currArrDec.setName((String) dialogResults[1]);
                     currArrDec.setValues((String) dialogResults[2]);
+                    currArrDec.setLen((String) dialogResults[2]);
+                    currArrDec.setDeclaredByValues((Boolean) dialogResults[3]);
                     
                     //update variable in flowchart
                     Var newVar = fFlowchart.addVar(currArrDec.getType(), currArrDec.getName(), "");
@@ -1346,6 +1348,8 @@ public class CreateFunctionDialog {
                 newArrDecController.setType((VarType)dialogResults[0]);
                 newArrDecController.setName((String)dialogResults[1]);
                 newArrDecController.setValues((String)dialogResults[2]);
+                newArrDecController.setLen((String) dialogResults[2]);
+                newArrDecController.setDeclaredByValues((Boolean) dialogResults[3]);
                 
                 //set up vertex
                 setUpNewVertex(newArrDeclaration);
@@ -1652,6 +1656,7 @@ public class CreateFunctionDialog {
             //add exisitng vertices to dialogZc
             for(Vertex v: fFlowchart.getVertices()){
                 dialogZc.getChildren().add(v.getView());
+                v.getView().updateLabel(v.getController().getVertexLabel());
                 setUpVertexViewHandlers(v);
             }
         }
@@ -1731,6 +1736,13 @@ public class CreateFunctionDialog {
                 (canvasSp.getHvalue() / canvasSp.getHmax()) - (vView.getBoundsInLocal().getWidth()/2) + canvasSp.getViewportBounds().getWidth() / 2);
         vView.setTranslateY((canvasGroup.getBoundsInLocal().getHeight() - canvasSp.getViewportBounds().getHeight()) * 
                 (canvasSp.getVvalue() / canvasSp.getVmax()) - (vView.getBoundsInLocal().getHeight()/2) + canvasSp.getViewportBounds().getHeight() / 2);
+        vView.addEventHandler(MouseEvent.MOUSE_PRESSED, (MouseEvent e) -> {
+            // edit vertex on double click 
+            if (e.getClickCount() >= 2) {
+                editVertexBtn.fire();
+                vView.setOpacity(1);
+            }
+        });
     }
     
     /**
@@ -1752,12 +1764,7 @@ public class CreateFunctionDialog {
                     deselectComponent();
                     return;
                 }
-            } // edit vertex on double click 
-            else if (e.getClickCount() >= 2) {
-                editVertexBtn.fire();
-                vView.setOpacity(1);
             }
-            
             //deselect previous component
             deselectComponent();
             //select this component

@@ -38,9 +38,11 @@ public class CreateVertexDialog {
     //expression HBox for building expressions
     private ExpressionHBox exprHbx;
     //flag booleans for input form responses
-    private boolean valid, usingExpr;
+    private boolean valid, usingExpr, declaredByValues;
     //descriptive texts for if and while input forms
     private Text ifText, whileText;
+    //descriptive text for prompting user to enter values
+    private Text valPromptTxt;
     //data type for variable vertices
     private VarType type;
     //Strings returning user input
@@ -731,7 +733,12 @@ public class CreateVertexDialog {
             typeCmbx = new ComboBox<>();
             typeCmbx.setItems(FXCollections.observableArrayList(VarType.values()));
             typeCmbx.setPromptText("Type");
-
+            
+            valCmbx = new ComboBox<>();
+            valCmbx.setPromptText("Declare by values");
+            valCmbx.setItems(FXCollections.observableArrayList("Declare by values", "Declare by length"));
+            valCmbx.setValue("Declare by values");
+            
             //instantiate text field for entering variable name
             nameTxtFld = new TextField();
             nameTxtFld.setPromptText("Name");
@@ -757,6 +764,7 @@ public class CreateVertexDialog {
                     val = valueTxtFld.getText();
                     type = (VarType) typeCmbx.getValue();
                     name = nameTxtFld.getText();
+                    declaredByValues = valCmbx.getValue().equals("Declare by values");
                     stage.close();
                 }
             });
@@ -767,22 +775,38 @@ public class CreateVertexDialog {
             confirmHBox.setPadding(new Insets(10, 50, 50, 50));
             confirmHBox.getChildren().add(confirmBtn);
 
+            valPromptTxt = new Text("enter values for the array of the correct\ntype, spereated by commas ','");
+            
+            valCmbx.setOnAction(e -> {
+                if(valCmbx.getValue().equals("Declare by values")){
+                    valPromptTxt.setText("enter values for the array of the correct\ntype, spereated by commas ','");
+                    valueTxtFld.setPromptText("Values");
+                } else if (valCmbx.getValue().equals("Declare by length")){
+                    valPromptTxt.setText("enter the length of the array\n(values will initialise as null)");
+                    valueTxtFld.setPromptText("Length");
+                }
+            });
+            
             //instantiate root node
             root = new VBox();
             root.setPadding(new Insets(10, 50, 50, 50));
             root.setSpacing(5);
-            root.getChildren().addAll(typeCmbx, nameTxtFld, new VBox(new Text("please enter values for the array of the correct\ntype, spereated by commas ','"),
-                    valueTxtFld), confirmHBox);
+            root.getChildren().addAll(typeCmbx, nameTxtFld, valCmbx, 
+                    new VBox(valPromptTxt, valueTxtFld), confirmHBox);
             
-            sceneHeight = 220;
+            sceneHeight = 240;
             
             if(isEdit){
                 typeCmbx.setValue((VarType)vertexVals[0]);
                 nameTxtFld.setText((String)vertexVals[1]);
                 valueTxtFld.setText((String)vertexVals[2]);
+                if(!(Boolean)vertexVals[3]){
+                    valCmbx.setValue("Declare by length");
+                    valPromptTxt.setText("enter the length of the array\n(values will initialise as null)");
+                    valueTxtFld.setPromptText("Length");
+                }
             }
         }
-        
         
         //instantiate scene
         Scene scene = new Scene(root, sceneWidth, sceneHeight);
@@ -820,7 +844,7 @@ public class CreateVertexDialog {
                 results = new Object[]{valid, val, parseVarName};
                 break;
             case "Array Declaration":
-                results = new Object[]{type, name, val};
+                results = new Object[]{type, name, val, declaredByValues};
                 break;
             case "For Loop":
                 results = new Object[]{intExpr, condExpr, updateExpr, valid};
