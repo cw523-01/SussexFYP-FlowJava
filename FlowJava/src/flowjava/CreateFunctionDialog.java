@@ -326,280 +326,281 @@ public class CreateFunctionDialog {
         //set up edit button
         editVertexBtn = new Button("Edit");
         editVertexBtn.setOnAction(e -> {
-            CreateVertexDialog nVD = new CreateVertexDialog();
-            VertexController currentController = ((VertexView) selectedComponent).getVertex().getController();
-            //open create vertex dialog with the controller of selectedComponent then update based on input form response
-            if (currentController instanceof IfStmtController) {
-                IfStmtController currIfStmt = (IfStmtController) currentController;
-                Object[] dialogResults = nVD.display("If Statement", null, true, new Object[]{currIfStmt.getExpr(), currIfStmt.getExprHbx()});
+            if (selectedComponent instanceof VertexView) {
+                CreateVertexDialog nVD = new CreateVertexDialog();
+                VertexController currentController = ((VertexView) selectedComponent).getVertex().getController();
+                //open create vertex dialog with the controller of selectedComponent then update based on input form response
+                if (currentController instanceof IfStmtController) {
+                    IfStmtController currIfStmt = (IfStmtController) currentController;
+                    Object[] dialogResults = nVD.display("If Statement", null, true, new Object[]{currIfStmt.getExpr(), currIfStmt.getExprHbx()});
 
-                boolean isValid = (boolean) dialogResults[2];
+                    boolean isValid = (boolean) dialogResults[2];
 
-                //only instantiate vertex if the values are not null
-                if (isValid) {
+                    //only instantiate vertex if the values are not null
+                    if (isValid) {
+                        //set contoller values
+                        currIfStmt.setExpr((String) dialogResults[0]);
+                        currIfStmt.setExprHbx((ExpressionHBox) dialogResults[1]);
+
+                        //update vertex view label
+                        String label = currIfStmt.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 18) + "...";
+                        }
+                        currIfStmt.getVertex().getView().updateLabel(label);
+                        updateRSidebar();
+                    }
+
+                } else if (currentController instanceof WhileController) {
+                    WhileController currWhile = (WhileController) currentController;
+                    Object[] dialogResults = nVD.display("While Loop", null, true, new Object[]{currWhile.getExpr(), currWhile.getExprHbx()});
+                    boolean isValid = (boolean) dialogResults[2];
+
+                    //only instantiate vertex if the values are not null
+                    if (isValid) {
+
+                        //set contoller values
+                        currWhile.setExpr((String) dialogResults[0]);
+                        currWhile.setExprHbx((ExpressionHBox) dialogResults[1]);
+
+                        //update vertex view label
+                        String label = currWhile.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 18) + "...";
+                        }
+                        currWhile.getVertex().getView().updateLabel(label);
+                        updateRSidebar();
+                    }
+                } else if (currentController instanceof ForLoopController) {
+                    ForLoopController currFor = (ForLoopController) currentController;
+                    Object[] dialogResults = nVD.display("For Loop", null, true, new Object[]{currFor.getInitialExpr(), currFor.getConditionExpr(), currFor.getUpdateExpr()});
+                    boolean isValid = (boolean) dialogResults[3];
+
+                    //only instantiate vertex if the values are not null
+                    if (isValid) {
+
+                        //set contoller values
+                        currFor.setInitialExpr((String) dialogResults[0]);
+                        currFor.setConditionExpr((String) dialogResults[1]);
+                        currFor.setUpdateExpr((String) dialogResults[2]);
+
+                        //update vertex view label
+                        String label = currFor.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 18) + "...";
+                        }
+                        currFor.getVertex().getView().updateLabel(label);
+
+                        updateRSidebar();
+                    }
+
+                } else if (currentController instanceof OutputController) {
+                    OutputController currOutput = (OutputController) currentController;
+                    Object[] dialogResults = nVD.display("Output", null, true, new Object[]{currOutput.getExpr(), currOutput.getExprHbx()});
+                    boolean isValid = (boolean) dialogResults[2];
+
+                    //only instantiate vertex if the values are not null
+                    if (isValid) {
+                        //set contoller values
+                        currOutput.setExpr((String) dialogResults[0]);
+                        currOutput.setExprHbx((ExpressionHBox) dialogResults[1]);
+                        currOutput.setUsingExprHbx((boolean) dialogResults[3]);
+
+                        //update vertex view label
+                        String label = currOutput.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 15) + "...";
+                        }
+                        currOutput.getVertex().getView().updateLabel(label);
+                        updateRSidebar();
+                    }
+
+                } else if (currentController instanceof UserInToVarController) {
+                    UserInToVarController currUserInToVar = (UserInToVarController) currentController;
+                    ArrayList<Var> currVars = fFlowchart.getVariables();
+                    currVars.remove(currUserInToVar.getVar());
+                    Object[] dialogResults = nVD.display("User Input to Variable", currVars, true, new Object[]{currUserInToVar.getType(), currUserInToVar.getName()});
+
+                    boolean valuesNotNull = true;
+                    int i = 0;
+
+                    //check if given values are null
+                    while (valuesNotNull && i < dialogResults.length - 1) {
+                        if (dialogResults[i] == null) {
+                            valuesNotNull = false;
+                        }
+                        i++;
+                    }
+
+                    //only instantiate vertex if the values are not null
+                    if (valuesNotNull) {
+                        //set contoller values
+                        currUserInToVar.setType((VarType) dialogResults[0]);
+                        currUserInToVar.setName((String) dialogResults[1]);
+
+                        fFlowchart.removeVar(currUserInToVar.getVar());
+
+                        //update variable in flowchart
+                        Var newVar = fFlowchart.addVar(currUserInToVar.getType(), currUserInToVar.getName(), "");
+                        currUserInToVar.setVar(newVar);
+
+                        //update vertex view label
+                        String label = currUserInToVar.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 15) + "...";
+                        }
+                        currUserInToVar.getVertex().getView().updateLabel(label);
+
+                    }
+
+                } else if (currentController instanceof VarAssignController) {
+                    VarAssignController currVarAssign = (VarAssignController) currentController;
+                    Object[] dialogResults = nVD.display("Variable Assignment", null, true, new Object[]{currVarAssign.getVarName(), currVarAssign.getExpr(), currVarAssign.getExprHbx()});
+
+                    boolean isValid = (boolean) dialogResults[3];
+
+                    //only instantiate vertex if the values are not null
+                    if (isValid) {
+                        //set contoller values
+                        currVarAssign.setVarName((String) dialogResults[0]);
+                        currVarAssign.setExpr((String) dialogResults[1]);
+                        currVarAssign.setExprHbx((ExpressionHBox) dialogResults[2]);
+                        currVarAssign.setUsingExprHbx((boolean) dialogResults[4]);
+
+                        //update vertex view label
+                        String label = currVarAssign.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 19) + "...";
+                        }
+                        currVarAssign.getVertex().getView().updateLabel(label);
+
+                    }
+
+                } else if (currentController instanceof VarDecController) {
+                    VarDecController currVarDec = (VarDecController) currentController;
+                    ArrayList<Var> currVars = fFlowchart.getVariables();
+                    currVars.remove(currVarDec.getVar());
+                    Object[] dialogResults = nVD.display("Variable Declaration", currVars, true, new Object[]{currVarDec.getType(), currVarDec.getName(), currVarDec.getExpr(), currVarDec.getExprHbx()});
+
+                    boolean valuesNotNull = true;
+                    int i = 0;
+
+                    //check if given values are null
+                    while (valuesNotNull && i < dialogResults.length - 1) {
+                        if (dialogResults[i] == null) {
+                            valuesNotNull = false;
+                        }
+                        i++;
+                    }
+
+                    //only instantiate vertex if the values are not null
+                    if (valuesNotNull) {
+                        //set contoller values
+                        currVarDec.setType((VarType) dialogResults[0]);
+                        currVarDec.setName((String) dialogResults[1]);
+                        currVarDec.setExpr((String) dialogResults[2]);
+                        currVarDec.setExprHbx((ExpressionHBox) dialogResults[3]);
+                        currVarDec.setUsingExprHbx((boolean) dialogResults[4]);
+
+                        //update variable in flowchart
+                        Var newVar = fFlowchart.addVar(currVarDec.getType(), currVarDec.getName(), "");
+                        currVarDec.setVar(newVar);
+
+                        //update vertex view label
+                        String label = currVarDec.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 15) + "...";
+                        }
+                        currVarDec.getVertex().getView().updateLabel(label);
+
+                    }
+                } else if (currentController instanceof RecurseController) {
+                    RecurseController currRec = (RecurseController) currentController;
+
+                    Object[] dialogResults = nVD.display("Recurse", fFlowchart.getVariables(), true, new Object[]{currRec.getParameterVals(), currRec.getVariableForValue()});
+
                     //set contoller values
-                    currIfStmt.setExpr((String) dialogResults[0]);
-                    currIfStmt.setExprHbx((ExpressionHBox) dialogResults[1]);
+                    boolean valid = (boolean) dialogResults[0];
 
-                    //update vertex view label
-                    String label = currIfStmt.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 18) + "...";
-                    }
-                    currIfStmt.getVertex().getView().updateLabel(label);
-                    updateRSidebar();
-                }
+                    if (valid) {
+                        currRec.setParameterVals((String) dialogResults[1]);
+                        currRec.setVariableForValue((String) dialogResults[2]);
 
-            } else if (currentController instanceof WhileController) {
-                WhileController currWhile = (WhileController) currentController;
-                Object[] dialogResults = nVD.display("While Loop", null, true, new Object[]{currWhile.getExpr(), currWhile.getExprHbx()});
-                boolean isValid = (boolean) dialogResults[2];
+                        //update vertex view label
+                        String label = currRec.getVertexLabel();
+                        if (label.length() > 16) {
+                            label = label.substring(0, 17) + "...";
+                        }
 
-                //only instantiate vertex if the values are not null
-                if (isValid) {
-
-                    //set contoller values
-                    currWhile.setExpr((String) dialogResults[0]);
-                    currWhile.setExprHbx((ExpressionHBox) dialogResults[1]);
-
-                    //update vertex view label
-                    String label = currWhile.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 18) + "...";
-                    }
-                    currWhile.getVertex().getView().updateLabel(label);
-                    updateRSidebar();
-                }
-            } else if (currentController instanceof ForLoopController) {
-                ForLoopController currFor = (ForLoopController)currentController;
-                Object[] dialogResults = nVD.display("For Loop", null, true, new Object[]{currFor.getInitialExpr(), currFor.getConditionExpr(), currFor.getUpdateExpr()});
-                boolean isValid = (boolean) dialogResults[3];
-
-                //only instantiate vertex if the values are not null
-                if (isValid) {
-
-                    //set contoller values
-                    currFor.setInitialExpr((String) dialogResults[0]);
-                    currFor.setConditionExpr((String) dialogResults[1]);
-                    currFor.setUpdateExpr((String) dialogResults[2]);
-
-                    //update vertex view label
-                    String label = currFor.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 18) + "...";
-                    }
-                    currFor.getVertex().getView().updateLabel(label);
-                    
-                    updateRSidebar();
-                }
-                
-            } else if (currentController instanceof OutputController) {
-                OutputController currOutput = (OutputController) currentController;
-                Object[] dialogResults = nVD.display("Output", null, true, new Object[]{currOutput.getExpr(), currOutput.getExprHbx()});
-                boolean isValid = (boolean) dialogResults[2];
-
-                //only instantiate vertex if the values are not null
-                if (isValid) {
-                    //set contoller values
-                    currOutput.setExpr((String) dialogResults[0]);
-                    currOutput.setExprHbx((ExpressionHBox) dialogResults[1]);
-                    currOutput.setUsingExprHbx((boolean) dialogResults[3]);
-
-                    //update vertex view label
-                    String label = currOutput.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 15) + "...";
-                    }
-                    currOutput.getVertex().getView().updateLabel(label);
-                    updateRSidebar();
-                }
-
-            } else if (currentController instanceof UserInToVarController) {
-                UserInToVarController currUserInToVar = (UserInToVarController) currentController;
-                ArrayList<Var> currVars = fFlowchart.getVariables();
-                currVars.remove(currUserInToVar.getVar());
-                Object[] dialogResults = nVD.display("User Input to Variable", currVars, true, new Object[]{currUserInToVar.getType(), currUserInToVar.getName()});
-
-                boolean valuesNotNull = true;
-                int i = 0;
-
-                //check if given values are null
-                while (valuesNotNull && i < dialogResults.length - 1) {
-                    if (dialogResults[i] == null) {
-                        valuesNotNull = false;
-                    }
-                    i++;
-                }
-
-                //only instantiate vertex if the values are not null
-                if (valuesNotNull) {
-                    //set contoller values
-                    currUserInToVar.setType((VarType) dialogResults[0]);
-                    currUserInToVar.setName((String) dialogResults[1]);
-
-                    fFlowchart.removeVar(currUserInToVar.getVar());
-
-                    //update variable in flowchart
-                    Var newVar = fFlowchart.addVar(currUserInToVar.getType(), currUserInToVar.getName(), "");
-                    currUserInToVar.setVar(newVar);
-
-                    //update vertex view label
-                    String label = currUserInToVar.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 15) + "...";
-                    }
-                    currUserInToVar.getVertex().getView().updateLabel(label);
-
-                }
-
-            } else if (currentController instanceof VarAssignController) {
-                VarAssignController currVarAssign = (VarAssignController) currentController;
-                Object[] dialogResults = nVD.display("Variable Assignment", null, true, new Object[]{currVarAssign.getVarName(), currVarAssign.getExpr(), currVarAssign.getExprHbx()});
-
-                boolean isValid = (boolean) dialogResults[3];
-
-                //only instantiate vertex if the values are not null
-                if (isValid) {
-                    //set contoller values
-                    currVarAssign.setVarName((String) dialogResults[0]);
-                    currVarAssign.setExpr((String) dialogResults[1]);
-                    currVarAssign.setExprHbx((ExpressionHBox) dialogResults[2]);
-                    currVarAssign.setUsingExprHbx((boolean) dialogResults[4]);
-
-                    //update vertex view label
-                    String label = currVarAssign.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 19) + "...";
-                    }
-                    currVarAssign.getVertex().getView().updateLabel(label);
-
-                }
-
-            } else if (currentController instanceof VarDecController) {
-                VarDecController currVarDec = (VarDecController) currentController;
-                ArrayList<Var> currVars = fFlowchart.getVariables();
-                currVars.remove(currVarDec.getVar());
-                Object[] dialogResults = nVD.display("Variable Declaration", currVars, true, new Object[]{currVarDec.getType(), currVarDec.getName(), currVarDec.getExpr(), currVarDec.getExprHbx()});
-
-                boolean valuesNotNull = true;
-                int i = 0;
-
-                //check if given values are null
-                while (valuesNotNull && i < dialogResults.length - 1) {
-                    if (dialogResults[i] == null) {
-                        valuesNotNull = false;
-                    }
-                    i++;
-                }
-
-                //only instantiate vertex if the values are not null
-                if (valuesNotNull) {
-                    //set contoller values
-                    currVarDec.setType((VarType) dialogResults[0]);
-                    currVarDec.setName((String) dialogResults[1]);
-                    currVarDec.setExpr((String) dialogResults[2]);
-                    currVarDec.setExprHbx((ExpressionHBox) dialogResults[3]);
-                    currVarDec.setUsingExprHbx((boolean) dialogResults[4]);
-
-                    //update variable in flowchart
-                    Var newVar = fFlowchart.addVar(currVarDec.getType(), currVarDec.getName(), "");
-                    currVarDec.setVar(newVar);
-
-                    //update vertex view label
-                    String label = currVarDec.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 15) + "...";
-                    }
-                    currVarDec.getVertex().getView().updateLabel(label);
-
-                }
-            }else if (currentController instanceof RecurseController) {
-                RecurseController currRec = (RecurseController) currentController;
-                
-                Object[] dialogResults = nVD.display("Recurse", fFlowchart.getVariables(), true, new Object[]{currRec.getParameterVals(), currRec.getVariableForValue()});
-
-                //set contoller values
-                boolean valid = (boolean)dialogResults[0];
-                
-                if(valid){
-                    currRec.setParameterVals((String) dialogResults[1]);
-                    currRec.setVariableForValue((String) dialogResults[2]);
-
-                    //update vertex view label
-                    String label = currRec.getVertexLabel();
-                    if (label.length() > 16) {
-                        label = label.substring(0, 17) + "...";
+                        currRec.getVertex().getView().updateLabel(label);
                     }
 
-                    currRec.getVertex().getView().updateLabel(label);
-                }
+                } else if (currentController instanceof FunctInvokeController) {
+                    FunctInvokeController currFI = (FunctInvokeController) currentController;
 
-            } else if (currentController instanceof FunctInvokeController) {
-                FunctInvokeController currFI = (FunctInvokeController) currentController;
-                
-                Object[] dialogResults = nVD.display("Invoke Other Function", fFlowchart.getVariables(), true, new Object[]{otherFunctions, currFI.getFunctionName(), currFI.getParameterVals(), currFI.getVariableForValue()});
+                    Object[] dialogResults = nVD.display("Invoke Other Function", fFlowchart.getVariables(), true, new Object[]{otherFunctions, currFI.getFunctionName(), currFI.getParameterVals(), currFI.getVariableForValue()});
 
-                boolean isValid = (boolean) dialogResults[3];
+                    boolean isValid = (boolean) dialogResults[3];
 
-                if (isValid) {
-                    //set contoller values
-                    currFI.setFunctionName((String) dialogResults[0]);
-                    currFI.setParameterVals((String) dialogResults[1]);
-                    currFI.setVariableForValue((String) dialogResults[2]);
+                    if (isValid) {
+                        //set contoller values
+                        currFI.setFunctionName((String) dialogResults[0]);
+                        currFI.setParameterVals((String) dialogResults[1]);
+                        currFI.setVariableForValue((String) dialogResults[2]);
 
-                    //update vertex view label
-                    String label = currFI.getVertexLabel();
-                    if (label.length() > 16) {
-                        label = label.substring(0, 17) + "...";
+                        //update vertex view label
+                        String label = currFI.getVertexLabel();
+                        if (label.length() > 16) {
+                            label = label.substring(0, 17) + "...";
+                        }
+
+                        currFI.getVertex().getView().updateLabel(label);
+
+                    }
+                } else if (currentController instanceof ArrayDecController) {
+                    ArrayDecController currArrDec = (ArrayDecController) currentController;
+                    ArrayList<Var> currVars = fFlowchart.getVariables();
+                    currVars.remove(currArrDec.getVar());
+                    Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues(), currArrDec.isDeclaredByValues()});
+
+                    boolean valuesNotNull = true;
+                    int i = 0;
+
+                    //check if given values are null
+                    while (valuesNotNull && i < dialogResults.length - 1) {
+                        if (dialogResults[i] == null) {
+                            valuesNotNull = false;
+                        }
+                        i++;
                     }
 
-                    currFI.getVertex().getView().updateLabel(label);
+                    //only instantiate vertex if the values are not null
+                    if (valuesNotNull) {
+                        //set contoller values
+                        currArrDec.setType((VarType) dialogResults[0]);
+                        currArrDec.setName((String) dialogResults[1]);
+                        currArrDec.setValues((String) dialogResults[2]);
+                        currArrDec.setLen((String) dialogResults[2]);
+                        currArrDec.setDeclaredByValues((Boolean) dialogResults[3]);
 
-                }
-            } else if (currentController instanceof ArrayDecController){
-                ArrayDecController currArrDec = (ArrayDecController) currentController;
-                ArrayList<Var> currVars = fFlowchart.getVariables();
-                currVars.remove(currArrDec.getVar());
-                Object[] dialogResults = nVD.display("Array Declaration", currVars, true, new Object[]{currArrDec.getType(), currArrDec.getName(), currArrDec.getValues(), currArrDec.isDeclaredByValues()});
+                        //update variable in flowchart
+                        Var newVar = fFlowchart.addVar(currArrDec.getType(), currArrDec.getName(), "");
+                        currArrDec.setVar(newVar);
 
-                boolean valuesNotNull = true;
-                int i = 0;
+                        //update vertex view label
+                        String label = currArrDec.getVertexLabel();
+                        if (label.length() > 18) {
+                            label = label.substring(0, 15) + "...";
+                        }
+                        currArrDec.getVertex().getView().updateLabel(label);
 
-                //check if given values are null
-                while (valuesNotNull && i < dialogResults.length - 1) {
-                    if (dialogResults[i] == null) {
-                        valuesNotNull = false;
+                        showAlert(Alert.AlertType.INFORMATION, "array created, you can access or modify array elements in expressions using "
+                                + currArrDec.getName() + "[~element index~]");
                     }
-                    i++;
                 }
 
-                //only instantiate vertex if the values are not null
-                if (valuesNotNull) {
-                    //set contoller values
-                    currArrDec.setType((VarType) dialogResults[0]);
-                    currArrDec.setName((String) dialogResults[1]);
-                    currArrDec.setValues((String) dialogResults[2]);
-                    currArrDec.setLen((String) dialogResults[2]);
-                    currArrDec.setDeclaredByValues((Boolean) dialogResults[3]);
-                    
-                    //update variable in flowchart
-                    Var newVar = fFlowchart.addVar(currArrDec.getType(), currArrDec.getName(), "");
-                    currArrDec.setVar(newVar);
-                    
-                    //update vertex view label
-                    String label = currArrDec.getVertexLabel();
-                    if (label.length() > 18) {
-                        label = label.substring(0, 15) + "...";
-                    }
-                    currArrDec.getVertex().getView().updateLabel(label);
-                    
-                    showAlert(Alert.AlertType.INFORMATION, "array created, you can access or modify array elements in expressions using " 
-                            + currArrDec.getName() + "[~element index~]");
-                }
+                updateRSidebar(currentController.getVertex());
             }
-            
-            updateRSidebar(currentController.getVertex());
-
         });
         
         //instantiate new flowchart component buttons
