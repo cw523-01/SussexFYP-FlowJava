@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package flowjava;
 
 import org.junit.Before;
@@ -10,7 +5,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Unit test class for ArrayDecController
+ * 
  * @author cwood
  */
 public class ArrayDecControllerTest {
@@ -25,6 +21,7 @@ public class ArrayDecControllerTest {
         instance.setName("a");
         instance.setType(VarType.INTEGER);
         instance.setValues("1,2,3,4,5");
+        instance.setDeclaredByValues(true);
     }
 
     /**
@@ -78,6 +75,7 @@ public class ArrayDecControllerTest {
         String expResult = "1,2,3,4,5";
         String result = instance.getValues();
         assertEquals(expResult, result);
+        
     }
 
     /**
@@ -98,6 +96,11 @@ public class ArrayDecControllerTest {
         System.out.println("getVertexLabel");
         String expResult = "Integer array a = 1,2,3,4,5";
         String result = instance.getVertexLabel();
+        assertEquals(expResult, result);
+        instance.setDeclaredByValues(false);
+        instance.setLen("5");
+        expResult = "Integer array a = new empty array of length 5";
+        result = instance.getVertexLabel();
         assertEquals(expResult, result);
     }
 
@@ -131,6 +134,11 @@ public class ArrayDecControllerTest {
         System.out.println("getJavaDescription");
         String expResult = "Integer[] a = {1,2,3,4,5};";
         String result = instance.getJavaDescription();
+        assertEquals(expResult, result);
+        instance.setDeclaredByValues(false);
+        instance.setLen("5");
+        expResult = "Integer[] a = new Integer[5];";
+        result = instance.getJavaDescription();
         assertEquals(expResult, result);
     }
     

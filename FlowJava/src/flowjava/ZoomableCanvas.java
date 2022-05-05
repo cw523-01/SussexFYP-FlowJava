@@ -1,4 +1,3 @@
-
 package flowjava;
 
 import javafx.beans.property.DoubleProperty;
