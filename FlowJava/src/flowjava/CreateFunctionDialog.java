@@ -1513,8 +1513,11 @@ public class CreateFunctionDialog {
                 return;
             }
             //ensure function name is valid to FlowJava
-            if(nameTxtFld.getText().equals("main") || nameTxtFld.getText().equals("run") || nameTxtFld.getText().equals("start") ){
-                showAlert(Alert.AlertType.ERROR, "User created functions can't be named 'main' 'run' or 'start' in Flowjava");
+            if(nameTxtFld.getText().equals("main") || nameTxtFld.getText().equals("run") || nameTxtFld.getText().equals("start") 
+                    || nameTxtFld.getText().equals("getUserInput") || nameTxtFld.getText().equals("showAlert")
+                    || nameTxtFld.getText().equals("cancelRun")){
+                showAlert(Alert.AlertType.ERROR, "User created functions can't be named 'main', 'run', 'start', 'getUserInput',"
+                        + "'showAlert' or 'cancelRun' in Flowjava");
                 return;
             }
             

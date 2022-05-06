@@ -357,8 +357,11 @@ public class CreateVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "empty values!");
                 } else if (varNames.contains(nameTxtFld.getText())) {
                     showAlert(Alert.AlertType.ERROR, "variable name already used!");
-                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString")){
-                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\" or \"userInputString\" in flow java");
+                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString") || 
+                        nameTxtFld.getText().equals("running") || nameTxtFld.getText().equals("semaphore") ||
+                        nameTxtFld.getText().equals("customAlert") || nameTxtFld.getText().equals("isResultPresent")){
+                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\",\"running\","
+                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in flow java");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else {
@@ -520,8 +523,11 @@ public class CreateVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "empty values!");
                 } else if (varNames.contains(nameTxtFld.getText())) {
                     showAlert(Alert.AlertType.ERROR, "variable name already used!");
-                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString")){
-                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\" or \"userInputString\" in flow java");
+                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString") || 
+                        nameTxtFld.getText().equals("running") || nameTxtFld.getText().equals("semaphore") ||
+                        nameTxtFld.getText().equals("customAlert") || nameTxtFld.getText().equals("isResultPresent")){
+                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\",\"running\","
+                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in flow java");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else if(valCmbx.getValue() == null){
@@ -749,8 +755,11 @@ public class CreateVertexDialog {
                     showAlert(Alert.AlertType.ERROR, "empty values!");
                 } else if (varNames.contains(nameTxtFld.getText())) {
                     showAlert(Alert.AlertType.ERROR, "variable name already used!");
-                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString")){
-                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\" or \"userInputString\" in flow java");
+                } else if (nameTxtFld.getText().equals("userInputBr") || nameTxtFld.getText().equals("userInputString") || 
+                        nameTxtFld.getText().equals("running") || nameTxtFld.getText().equals("semaphore") ||
+                        nameTxtFld.getText().equals("customAlert") || nameTxtFld.getText().equals("isResultPresent")){
+                    showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\",\"running\","
+                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in flow java");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else if(valueTxtFld.getText() == null || valueTxtFld.getText().isEmpty()){
