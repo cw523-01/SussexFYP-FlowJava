@@ -361,7 +361,7 @@ public class CreateVertexDialog {
                         nameTxtFld.getText().equals("running") || nameTxtFld.getText().equals("semaphore") ||
                         nameTxtFld.getText().equals("customAlert") || nameTxtFld.getText().equals("isResultPresent")){
                     showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\",\"running\","
-                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in flow java");
+                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in FlowJava");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else {
@@ -527,7 +527,7 @@ public class CreateVertexDialog {
                         nameTxtFld.getText().equals("running") || nameTxtFld.getText().equals("semaphore") ||
                         nameTxtFld.getText().equals("customAlert") || nameTxtFld.getText().equals("isResultPresent")){
                     showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\",\"running\","
-                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in flow java");
+                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in FlowJava");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else if(valCmbx.getValue() == null){
@@ -759,7 +759,7 @@ public class CreateVertexDialog {
                         nameTxtFld.getText().equals("running") || nameTxtFld.getText().equals("semaphore") ||
                         nameTxtFld.getText().equals("customAlert") || nameTxtFld.getText().equals("isResultPresent")){
                     showAlert(Alert.AlertType.ERROR, "user created variables cannot be named \"userInputBr\",\"running\","
-                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in flow java");
+                            + "\"semaphore\", \"customAlert\", \"isResultPresent\" or \"userInputString\" in FlowJava");
                 } else if (!nameTxtFld.getText().matches("^[a-zA-Z_$][a-zA-Z_$0-9]*$")) {
                     showAlert(Alert.AlertType.ERROR, "variable name is invalid!");
                 } else if(valueTxtFld.getText() == null || valueTxtFld.getText().isEmpty()){
